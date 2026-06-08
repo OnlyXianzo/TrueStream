@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -13,34 +12,14 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _beat = 1;
-  Timer? _timer;
 
-  @override
-  void initState() {
-    super.initState();
-    _startSequence();
-  }
-
-  void _startSequence() {
-    _timer = Timer(1200.ms, () {
-      if (mounted) setState(() => _beat = 2);
-      _timer = Timer(2300.ms, () {
-        if (mounted) setState(() => _beat = 3);
-        _timer = Timer(2500.ms, () {
-          if (mounted) setState(() => _beat = 4);
-        });
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  void _nextBeat() {
+    if (_beat < 4) {
+      setState(() => _beat++);
+    }
   }
 
   void _complete() {
-    _timer?.cancel();
     ref.read(settingsProvider.notifier).completeOnboarding();
   }
 
@@ -66,18 +45,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           // Content Layer based on active beat
           Positioned.fill(
-            child: SafeArea(
-              child: AnimatedSwitcher(
-                duration: 600.ms,
-                switchInCurve: Curves.easeInOutCubic,
-                switchOutCurve: Curves.easeInOutCubic,
-                child: _buildBeatContent(context, colorScheme, textTheme),
+            child: GestureDetector(
+              onTap: (_beat == 1 || _beat == 2) ? _nextBeat : null,
+              behavior: HitTestBehavior.opaque,
+              child: SafeArea(
+                child: AnimatedSwitcher(
+                  duration: 600.ms,
+                  switchInCurve: Curves.easeInOutCubic,
+                  switchOutCurve: Curves.easeInOutCubic,
+                  child: _buildBeatContent(context, colorScheme, textTheme),
+                ),
               ),
             ),
           ),
 
           // Skip Button
-          if (_beat >= 2 && _beat < 4)
+          if (_beat < 4)
             Positioned(
               top: 16,
               right: 16,
@@ -91,6 +74,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
               ),
+            ),
+
+          // Tap anywhere hint for beats 1 & 2
+          if (_beat == 1 || _beat == 2)
+            Positioned(
+              bottom: 48,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  'Tap anywhere to continue',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Colors.white38,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ).animate(onComplete: (c) => c.repeat(reverse: true))
+                  .fadeIn(duration: 600.ms)
+                  .then(delay: 1200.ms)
+                  .fadeOut(duration: 600.ms),
             ),
         ],
       ),
@@ -191,7 +194,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ).animate(delay: 800.ms).slideX(begin: 0.5, curve: Curves.easeOutCubic, duration: 400.ms).fadeIn(),
               const SizedBox(height: 40),
               ElevatedButton(
-                onPressed: () => setState(() => _beat = 4),
+                onPressed: _complete,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primaryContainer,
                   foregroundColor: colorScheme.onPrimaryContainer,
@@ -201,34 +204,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
                 child: const Text('Get Started'),
-              ).animate(delay: 1200.ms).fadeIn(),
+              ).animate().fadeIn(delay: 1200.ms),
             ],
           ),
         );
       case 4:
       default:
-        // Transition glow point compression
-        return Center(
-          key: const ValueKey(4),
-          child: Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colorScheme.primary,
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.primary.withValues(alpha: 0.8),
-                  blurRadius: 40,
-                  spreadRadius: 20,
-                ),
-              ],
-            ),
-          )
-              .animate(onComplete: (_) => _complete())
-              .scale(end: const Offset(40, 40), duration: 1000.ms, curve: Curves.easeInOutQuart)
-              .fadeOut(delay: 600.ms, duration: 400.ms),
-        );
+        return const SizedBox.shrink();
     }
   }
 

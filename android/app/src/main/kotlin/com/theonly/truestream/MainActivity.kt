@@ -5,6 +5,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
+import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import kotlinx.coroutines.*
@@ -69,8 +70,7 @@ class MainActivity : FlutterActivity() {
                             val py = Python.getInstance()
                             val engine = py.getModule("truestream_engine")
                             val bootstrapResult = engine.callAttr("bootstrap")
-                            val mapResult = bootstrapResult.asMap()
-                            val resultMap = mapResult.mapKeys { it.key.toString() }.mapValues { it.value.toJava() }
+                            val resultMap = bootstrapResult.toJavaMap()
                             withContext(Dispatchers.Main) {
                                 result.success(resultMap)
                             }
@@ -94,7 +94,7 @@ class MainActivity : FlutterActivity() {
                             val engine = py.getModule("truestream_engine")
                             
                             val startResult = engine.callAttr("start_download", url, downloadId, config, networkType)
-                            val resultMap = startResult.asMap().mapKeys { it.key.toString() }.mapValues { it.value.toJava() }
+                            val resultMap = startResult.toJavaMap()
                             
                             startProgressPolling(downloadId!!)
                             
@@ -116,7 +116,7 @@ class MainActivity : FlutterActivity() {
                             val py = Python.getInstance()
                             val engine = py.getModule("truestream_engine")
                             val cancelResult = engine.callAttr("cancel_download", downloadId)
-                            val resultMap = cancelResult.asMap().mapKeys { it.key.toString() }.mapValues { it.value.toJava() }
+                            val resultMap = cancelResult.toJavaMap()
                             withContext(Dispatchers.Main) {
                                 result.success(resultMap)
                             }
@@ -136,7 +136,7 @@ class MainActivity : FlutterActivity() {
                             val py = Python.getInstance()
                             val engine = py.getModule("truestream_engine")
                             val formatsResult = engine.callAttr("get_formats", url, config)
-                            val resultMap = formatsResult.asMap().mapKeys { it.key.toString() }.mapValues { it.value.toJava() }
+                            val resultMap = formatsResult.toJavaMap()
                             withContext(Dispatchers.Main) {
                                 result.success(resultMap)
                             }
@@ -156,7 +156,7 @@ class MainActivity : FlutterActivity() {
                             val py = Python.getInstance()
                             val engine = py.getModule("truestream_engine")
                             val playlistResult = engine.callAttr("get_playlist_info", url, config)
-                            val resultMap = playlistResult.asMap().mapKeys { it.key.toString() }.mapValues { it.value.toJava() }
+                            val resultMap = playlistResult.toJavaMap()
                             withContext(Dispatchers.Main) {
                                 result.success(resultMap)
                             }
@@ -175,7 +175,7 @@ class MainActivity : FlutterActivity() {
                             val py = Python.getInstance()
                             val engine = py.getModule("truestream_engine")
                             val resumeResult = engine.callAttr("scan_resume_candidates", cacheDir)
-                            val resultMap = resumeResult.asMap().mapKeys { it.key.toString() }.mapValues { it.value.toJava() }
+                            val resultMap = resumeResult.toJavaMap()
                             withContext(Dispatchers.Main) {
                                 result.success(resultMap)
                             }
@@ -203,6 +203,16 @@ class MainActivity : FlutterActivity() {
         )
     }
 
+    @Suppress("UNCHECKED_CAST")
+    private fun PyObject.toJavaMap(): Map<String, Any?> {
+        val rawMap = asMap() as Map<Any?, PyObject>
+        val result = mutableMapOf<String, Any?>()
+        for ((key, value) in rawMap) {
+            result[key.toString()] = value.toJava()
+        }
+        return result
+    }
+
     private fun initPython() {
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(applicationContext))
@@ -214,8 +224,8 @@ class MainActivity : FlutterActivity() {
         scope.launch(Dispatchers.IO) {
             val py = Python.getInstance()
             val downloader = py.getModule("truestream_engine.downloader")
-            val activeDownloads = downloader.get("_active_downloads")?.asMap() as? Map<String, PyObject>
-            val downloadInfo = activeDownloads?.get(downloadId)?.asMap() as? Map<String, PyObject>
+            val activeDownloads = downloader.get("_active_downloads")?.asMap() as? Map<Any?, PyObject>
+            val downloadInfo = activeDownloads?.get(downloadId)?.asMap() as? Map<Any?, PyObject>
             val progressQueue = downloadInfo?.get("progress_queue")
             val resultQueue = downloadInfo?.get("result_queue")
 
@@ -240,7 +250,7 @@ class MainActivity : FlutterActivity() {
                 if (!resultEmpty) {
                     try {
                         val resultVal = resultQueue.callAttr("get_nowait")
-                        val resultObj: Map<String, Any?> = resultVal.asMap().mapKeys { it.key.toString() }.mapValues { it.value.toJava() }
+                        val resultObj = resultVal.toJavaMap()
                         val isSuccess = resultObj["success"] as? Boolean ?: false
                         val eventJson = if (isSuccess) {
                             "{\"type\": \"event\", \"event\": \"finished\", \"download_id\": \"$downloadId\"}"
