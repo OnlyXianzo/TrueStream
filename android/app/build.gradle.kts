@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -5,11 +8,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-fun loadKeystoreProperties(): java.util.Properties? {
+fun loadKeystoreProperties(): Properties? {
     val propsFile = rootProject.file("key.properties")
     if (!propsFile.exists()) return null
-    val props = java.util.Properties()
-    props.load(java.io.FileInputStream(propsFile))
+    val props = Properties()
+    props.load(FileInputStream(propsFile))
     return props
 }
 
