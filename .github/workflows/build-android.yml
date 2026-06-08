@@ -29,6 +29,11 @@ jobs:
         with:
           channel: stable
 
+      - name: Install CMake 3.31.4
+        run: |
+          ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "cmake;3.31.4"
+
       - name: Decode keystore
         if: ${{ env.KEYSTORE_BASE64 != '' }}
         run: |
