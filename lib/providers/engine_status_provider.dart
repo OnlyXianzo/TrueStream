@@ -1,0 +1,45 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../engine/engine_provider.dart';
+
+class EngineStatus {
+  final bool ready;
+  final String? ytDlpVersion;
+  final bool ffmpegOk;
+  final String? jsRuntime;
+  final bool needsUpdate;
+  final String? error;
+
+  const EngineStatus({
+    required this.ready,
+    this.ytDlpVersion,
+    this.ffmpegOk = false,
+    this.jsRuntime,
+    this.needsUpdate = false,
+    this.error,
+  });
+}
+
+final engineStatusProvider = FutureProvider<EngineStatus>((ref) async {
+  final engine = ref.watch(engineProvider);
+  try {
+    final result = await engine.bootstrap();
+    if (result['success'] == true) {
+      return EngineStatus(
+        ready: true,
+        ytDlpVersion: result['yt_dlp_version'] as String?,
+        ffmpegOk: result['ffmpeg_ok'] as bool? ?? false,
+        jsRuntime: result['js_runtime'] as String?,
+        needsUpdate: result['needs_update'] as bool? ?? false,
+      );
+    }
+    return EngineStatus(
+      ready: false,
+      error: result['error_message'] as String?,
+    );
+  } catch (e) {
+    return EngineStatus(
+      ready: false,
+      error: e.toString(),
+    );
+  }
+});

@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../core/engine/engine_provider.dart';
 import '../../../providers/download_provider.dart';
+import '../../../providers/engine_status_provider.dart';
 import '../screens/format_picker_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -41,6 +42,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              const SizedBox(height: 24),
+              // Engine status
+              _EngineStatusBanner(colorScheme: colorScheme, textTheme: textTheme),
               const SizedBox(height: 24),
               // Hero section
               _HeroSection(colorScheme: colorScheme)
@@ -403,5 +407,60 @@ class _DownloadCard extends StatelessWidget {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1048576) return '${(bytes / 1024).toStringAsFixed(0)} KB';
     return '${(bytes / 1048576).toStringAsFixed(1)} MB';
+  }
+}
+
+class _EngineStatusBanner extends ConsumerWidget {
+  final ColorScheme colorScheme;
+  final TextTheme textTheme;
+
+  const _EngineStatusBanner({required this.colorScheme, required this.textTheme});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statusAsync = ref.watch(engineStatusProvider);
+
+    return statusAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (status) {
+        if (status.ready && !status.needsUpdate) return const SizedBox.shrink();
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: status.needsUpdate
+                ? colorScheme.tertiaryContainer
+                : colorScheme.errorContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                status.needsUpdate ? Icons.update : Icons.warning_amber,
+                size: 16,
+                color: status.needsUpdate
+                    ? colorScheme.onTertiaryContainer
+                    : colorScheme.onErrorContainer,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  status.needsUpdate
+                      ? 'Engine update available'
+                      : (status.error ?? 'Engine not ready'),
+                  style: textTheme.labelSmall?.copyWith(
+                    color: status.needsUpdate
+                        ? colorScheme.onTertiaryContainer
+                        : colorScheme.onErrorContainer,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
