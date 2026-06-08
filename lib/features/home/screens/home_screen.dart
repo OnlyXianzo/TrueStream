@@ -265,139 +265,206 @@ class _DownloadCard extends StatelessWidget {
 
   const _DownloadCard({required this.item, required this.colorScheme});
 
+  void _showVpnDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colorScheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.vpn_lock, color: colorScheme.error, size: 24),
+            const SizedBox(width: 12),
+            Text('Restricted Content',
+                style: Theme.of(ctx).textTheme.titleMedium),
+          ],
+        ),
+        content: Text(
+          'This content may be blocked in your region.\n\n'
+          'Try using a VPN or proxy to bypass network restrictions.',
+          style: Theme.of(ctx).textTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDownloading = item.status == 'downloading';
+    final isError = item.status == 'error';
     final textTheme = Theme.of(context).textTheme;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.2),
+    return GestureDetector(
+      onTap: isError && item.suggestsVpn
+          ? () => _showVpnDialog(context)
+          : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isError
+                ? colorScheme.error.withValues(alpha: 0.4)
+                : colorScheme.outlineVariant.withValues(alpha: 0.2),
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: isDownloading
-                  ? Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Icon(
-                          Icons.downloading,
-                          color: colorScheme.primary,
-                          size: 32,
-                        ),
-                      ],
-                    )
-                  : Icon(
-                      Icons.image_outlined,
-                      color: colorScheme.outline.withValues(alpha: 0.5),
-                      size: 32,
-                    ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Icon(
-                        Icons.more_vert,
-                        size: 18,
-                        color: colorScheme.outline.withValues(alpha: 0.6),
-                      ),
-                    ],
-                  ),
-                  if (isDownloading) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_formatBytes(item.downloadedBytes)} / ${_formatBytes(item.totalBytes)}',
-                      style: textTheme.mono.copyWith(
-                        color: colorScheme.outline,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          '${(item.progress * 100).toInt()} % downloading',
-                          style: textTheme.mono.copyWith(
-                            fontWeight: FontWeight.bold,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: isDownloading
+                    ? Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            Icons.downloading,
                             color: colorScheme.primary,
+                            size: 32,
                           ),
+                        ],
+                      )
+                    : Icon(
+                        isError ? Icons.error_outline : Icons.image_outlined,
+                        color: isError
+                            ? colorScheme.error
+                            : colorScheme.outline.withValues(alpha: 0.5),
+                        size: 32,
+                      ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.title,
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(
+                          Icons.more_vert,
+                          size: 18,
+                          color: colorScheme.outline.withValues(alpha: 0.6),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: item.progress,
-                        backgroundColor: colorScheme.surfaceContainerHighest,
-                        valueColor: AlwaysStoppedAnimation(
-                            colorScheme.primaryContainer),
-                        minHeight: 4,
+                    if (isDownloading) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_formatBytes(item.downloadedBytes)} / ${_formatBytes(item.totalBytes)}',
+                        style: textTheme.mono.copyWith(
+                          color: colorScheme.outline,
+                        ),
                       ),
-                    ),
-                  ] else ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        if (item.fileSize != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHigh,
-                              borderRadius: BorderRadius.circular(4),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            '${(item.progress * 100).toInt()} % downloading',
+                            style: textTheme.mono.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
                             ),
-                            child: Text(
-                              item.fileSize!,
-                              style: textTheme.mono.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurfaceVariant,
-                                fontSize: 10,
-                                letterSpacing: 0.5,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: item.progress,
+                          backgroundColor: colorScheme.surfaceContainerHighest,
+                          valueColor: AlwaysStoppedAnimation(
+                              colorScheme.primaryContainer),
+                          minHeight: 4,
+                        ),
+                      ),
+                    ] else if (isError) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        item.errorMessage ?? 'Download failed',
+                        style: textTheme.mono.copyWith(
+                          color: colorScheme.error,
+                          fontSize: 11,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (item.suggestsVpn) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.vpn_lock,
+                                size: 14, color: colorScheme.error),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Try VPN or proxy',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: colorScheme.error,
+                                decoration: TextDecoration.underline,
                               ),
                             ),
-                          ),
-                        const Spacer(),
-                        Icon(
-                          Icons.check_circle,
-                          color: colorScheme.primary,
-                          size: 20,
+                          ],
                         ),
                       ],
-                    ),
+                    ] else ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          if (item.fileSize != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHigh,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item.fileSize!,
+                                style: textTheme.mono.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontSize: 10,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          const Spacer(),
+                          Icon(
+                            Icons.check_circle,
+                            color: colorScheme.primary,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

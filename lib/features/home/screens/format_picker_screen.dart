@@ -21,12 +21,29 @@ class FormatPickerScreen extends ConsumerStatefulWidget {
   ConsumerState<FormatPickerScreen> createState() => _FormatPickerScreenState();
 }
 
+const _vpnKeywords = [
+  'not available in your country',
+  'sign in to confirm your age',
+  'age-restricted',
+  '403',
+  'ssl',
+  'handshake',
+  'timeout',
+  'name or service not known',
+];
+
+bool _isVpnSuggested(String error) {
+  final lower = error.toLowerCase();
+  return _vpnKeywords.any((kw) => lower.contains(kw));
+}
+
 class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
   String? _selectedVideoFormat;
   String? _selectedAudioFormat;
   String _selectedContainer = 'mkv';
   bool _isLoading = true;
   String? _error;
+  bool _suggestsVpn = false;
   List<Map<String, dynamic>> _videoFormats = [];
   List<Map<String, dynamic>> _audioFormats = [];
   String _fetchedTitle = '';
@@ -37,10 +54,39 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
     _fetchFormats();
   }
 
+  void _showVpnDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.vpn_lock, color: Theme.of(ctx).colorScheme.error, size: 24),
+            const SizedBox(width: 12),
+            Text('Restricted Content', style: Theme.of(ctx).textTheme.titleMedium),
+          ],
+        ),
+        content: Text(
+          'This content may be blocked in your region.\n\n'
+          'Try using a VPN or proxy to bypass network restrictions.',
+          style: Theme.of(ctx).textTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _fetchFormats() async {
     setState(() {
       _isLoading = true;
       _error = null;
+      _suggestsVpn = false;
     });
 
     try {
@@ -63,9 +109,11 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
         _selectedAudioFormat = result['recommended_audio_format_id'] as String?;
       } else {
         _error = result['error_message'] as String? ?? 'Failed to load formats';
+        _suggestsVpn = _isVpnSuggested(_error!);
       }
     } catch (e) {
       _error = 'Error: $e';
+      _suggestsVpn = _isVpnSuggested(_error!);
     }
 
     if (mounted) setState(() => _isLoading = false);
@@ -133,16 +181,45 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : _error != null
+                : _error != null
                 ? Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+                          Icon(
+                            _suggestsVpn ? Icons.vpn_lock : Icons.error_outline,
+                            size: 48,
+                            color: colorScheme.error,
+                          ),
                           const SizedBox(height: 16),
                           Text(_error!, textAlign: TextAlign.center),
+                          if (_suggestsVpn) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: colorScheme.errorContainer.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'This content may be restricted in your region. '
+                                'Try using a VPN or proxy to access it.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: colorScheme.onErrorContainer,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextButton.icon(
+                              onPressed: _showVpnDialog,
+                              icon: const Icon(Icons.info_outline, size: 16),
+                              label: const Text('Learn more'),
+                            ),
+                          ],
                           const SizedBox(height: 16),
                           OutlinedButton(
                             onPressed: _fetchFormats,

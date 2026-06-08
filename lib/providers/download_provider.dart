@@ -12,6 +12,9 @@ class DownloadItem {
   final DateTime addedAt;
   final String? fileSize;
   final String? completedDate;
+  final String? errorType;
+  final String? errorMessage;
+  final bool suggestsVpn;
 
   DownloadItem({
     required this.id,
@@ -25,6 +28,9 @@ class DownloadItem {
     DateTime? addedAt,
     this.fileSize,
     this.completedDate,
+    this.errorType,
+    this.errorMessage,
+    this.suggestsVpn = false,
   }) : addedAt = addedAt ?? DateTime.now();
 }
 
@@ -106,6 +112,10 @@ class DownloadNotifier extends StateNotifier<List<DownloadItem>> {
         );
       }).toList();
     } else if (eventType == 'error') {
+      final errorType = event['error_type'] as String?;
+      final errorMessage = event['error_message'] as String?;
+      final suggestsVpn = event['suggests_vpn'] as bool? ?? false;
+
       state = state.map((d) {
         if (d.id != downloadId) return d;
         return DownloadItem(
@@ -118,6 +128,9 @@ class DownloadNotifier extends StateNotifier<List<DownloadItem>> {
           totalBytes: d.totalBytes,
           thumbnailUrl: d.thumbnailUrl,
           addedAt: d.addedAt,
+          errorType: errorType,
+          errorMessage: errorMessage,
+          suggestsVpn: suggestsVpn,
         );
       }).toList();
     }

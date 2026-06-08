@@ -58,6 +58,7 @@ def poll_queues():
                                 "error_type": res.get("error_type", "ERROR_UNKNOWN"),
                                 "error_message": res.get("error_message", "Unknown error"),
                                 "recoverable": res.get("recoverable", True),
+                                "suggests_vpn": res.get("suggests_vpn", False),
                             }
                         print(json.dumps(event), flush=True)
                     except Exception:
