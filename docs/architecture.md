@@ -13,7 +13,7 @@ IPC layer.
 | Download engine | Python with yt-dlp (YoutubeDL class API) | Media extraction, format selection, downloading, and post-processing. |
 | Python bridge (Android) | Chaquopy (Gradle plugin) | Embeds CPython 3.11 into the APK. Flutter calls Python via Platform Channels. |
 | Python bridge (Desktop) | JSON over stdin/stdout | Flutter spawns Python as a managed subprocess. Structured JSON messages over stdio. |
-| JS runtime (Android) | QuickJS (embedded via NDK) | Executes YouTube's JS decryption challenges and PO Token generation. ~1–3 MB overhead. |
+| JS runtime (Android) | QuickJS (embedded via NDK) | Executes YouTube's JS decryption challenges and PO Token generation. About 1-3 MB overhead. |
 | JS runtime (Desktop) | Deno (lazy-loaded) | V8-based runtime for YouTube JS decryption. Downloaded on first run. |
 | Media processing | FFmpeg (static binary) | Muxing DASH streams, audio extraction, subtitle/thumbnail embedding, chapter splitting. |
 | Download accelerator | aria2c (static binary) | Parallel fragment downloading over 16 connections on WiFi. |
@@ -70,14 +70,14 @@ IPC layer.
 ### Android
 
 Python runs inside the app process via Chaquopy. QuickJS is compiled into the
-APK through the Android NDK. All binary paths are injected at runtime — the
+APK through the Android NDK. All binary paths are injected at runtime. The
 app never relies on system PATH. Output directories respect Android's scoped
 storage model.
 
 ### Desktop (Windows / Linux)
 
-Python and Deno are lazy-loaded on first run — downloaded as compressed
-tarballs, SHA-256 verified, and extracted to the app data directory. Flutter
+Python and Deno are lazy-loaded on first run. They download as compressed
+tarballs, get SHA-256 verified, and extract to the app data directory. Flutter
 manages the Python subprocess lifecycle, communicating via structured JSON
 over stdin and stdout.
 

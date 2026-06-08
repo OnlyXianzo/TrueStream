@@ -1,7 +1,6 @@
 # Contributing
 
-We welcome contributions to TrueStream. This guide explains how to contribute
-effectively.
+Thanks for contributing to TrueStream. Here's how the process works.
 
 ## Getting Started
 
@@ -15,9 +14,8 @@ effectively.
 
 ### Flutter / Dart
 
-- Follow the official Dart style guide and the project's `analysis_options.yaml`
-  settings.
-- Use Riverpod for shared state — avoid `setState()` for state shared across
+- Follow the official Dart style guide and the settings in `analysis_options.yaml`.
+- Use Riverpod for shared state. Avoid `setState()` for state shared across
   widgets.
 - Body text uses Instrument Sans (via `GoogleFonts.instrumentSans`). Mono text
   (speeds, URLs, format codes) uses the `mono` extension on `TextTheme`.
@@ -28,10 +26,10 @@ effectively.
 ### Python
 
 - Follow PEP 8 formatting standards.
-- Use the `YoutubeDL` class API from yt-dlp — never `subprocess.run()` with
+- Use the `YoutubeDL` class API from yt-dlp. Never call `subprocess.run()` with
   the yt-dlp binary.
 - All blocking operations must run in `threading.Thread` with a cancel event.
-- Structured JSON output for Flutter communication — no `print()` statements
+- Use structured JSON for Flutter communication. No `print()` statements
   for machine-readable output.
 
 ## Commit Messages
@@ -46,7 +44,7 @@ Types: `init`, `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `test`,
 `perf`.
 
 Keep commits focused on a single logical change. If a fix is small, commit it
-immediately rather than bundling it with unrelated work.
+right away instead of bundling it with unrelated work.
 
 ## Pull Request Process
 

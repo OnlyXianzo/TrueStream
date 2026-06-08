@@ -5,9 +5,8 @@ behavior does it affect? Reference any relevant issues or discussions.
 
 ## Description
 
-Describe what changed. Focus on the net effect of this pull request — avoid
-discussing approaches you tried and abandoned. Use repo-relative paths when
-referencing files.
+Describe what changed. Focus on the net effect of this pull request. Use
+repo-relative paths when referencing files.
 
 ```diff
 // A code snippet or diff fragment can help illustrate the change.
@@ -15,8 +14,8 @@ referencing files.
 
 ## Verification
 
-Explain how you verified this change works correctly. What did you test? On
-which platforms? Mention any new tests you added.
+How did you verify this change works? What did you test, and on which
+platforms? Mention any new tests you added.
 
 - [ ] Built and tested on Android
 - [ ] Built and tested on Windows
@@ -25,8 +24,8 @@ which platforms? Mention any new tests you added.
 
 ## Documentation
 
-If this change requires updates to the project documentation or user-facing
-docs, list what needs updating and whether it's included in this PR.
+If this change needs updates to project docs or user-facing docs, list what
+needs updating and whether it's included in this PR.
 
 - [ ] README.md
 - [ ] docs/architecture.md

@@ -70,11 +70,11 @@ flutter run -d chrome
 
 The app downloads runtime dependencies on first launch:
 
-- **Python environment** (desktop only) — contains yt-dlp and supporting
-  packages. ~45–60 MB compressed.
-- **FFmpeg** — static binary for media processing. ~25–35 MB.
-- **Deno** (desktop only) — JS runtime for YouTube decryption. ~32–40 MB.
-- **aria2c** — download accelerator. ~3–5 MB.
+- **Python environment** (desktop only). Contains yt-dlp and supporting
+  packages. About 45-60 MB compressed.
+- **FFmpeg**. Static binary for media processing. About 25-35 MB.
+- **Deno** (desktop only). JS runtime for YouTube decryption. About 32-40 MB.
+- **aria2c**. Download accelerator. About 3-5 MB.
 
 On Android, Python and QuickJS are embedded in the APK. FFmpeg and aria2c are
 lazy-loaded on first run.
