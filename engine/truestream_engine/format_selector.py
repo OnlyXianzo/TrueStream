@@ -3,9 +3,9 @@ def build_format_string(cfg: dict) -> str:
     explicit_aid = cfg.get("explicit_audio_format_id")
 
     if explicit_vid and explicit_aid:
-        return f"{explicit_vid}+{explicit_aid}"
+        return f"{explicit_vid}+{explicit_aid}/{explicit_vid}/best"
     if explicit_vid:
-        return explicit_vid
+        return f"{explicit_vid}/best"
 
     if cfg.get("audio_only"):
         audio_fmt = cfg.get("audio_format", "opus")
