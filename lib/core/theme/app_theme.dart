@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TrueStreamColors {
   TrueStreamColors._();
@@ -136,7 +137,6 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'IosevkaCharon',
       colorScheme: colorScheme,
       scaffoldBackgroundColor: TrueStreamColors.lightSurface,
       textTheme: _buildTextTheme(colorScheme),
@@ -174,7 +174,6 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'IosevkaCharon',
       colorScheme: colorScheme,
       scaffoldBackgroundColor: TrueStreamColors.darkSurface,
       textTheme: _buildTextTheme(colorScheme),
@@ -182,60 +181,31 @@ class AppTheme {
   }
 
   static TextTheme _buildTextTheme(ColorScheme colorScheme) {
-    return TextTheme(
-      displayLarge: const TextStyle(
-        fontFamily: 'IosevkaCharon',
+    final base = TextTheme(
+      displayLarge: TextStyle(
         fontSize: 48,
         fontWeight: FontWeight.w300,
         letterSpacing: -0.02,
       ),
-      headlineLarge: const TextStyle(
-        fontFamily: 'IosevkaCharon',
-        fontSize: 32,
-        fontWeight: FontWeight.w400,
-      ),
-      headlineMedium: const TextStyle(
-        fontFamily: 'IosevkaCharon',
-        fontSize: 28,
-        fontWeight: FontWeight.w400,
-      ),
-      titleLarge: const TextStyle(
-        fontFamily: 'IosevkaCharon',
-        fontSize: 24,
-        fontWeight: FontWeight.w500,
-      ),
-      titleMedium: const TextStyle(
-        fontFamily: 'IosevkaCharon',
-        fontSize: 18,
-        fontWeight: FontWeight.w500,
-      ),
-      bodyLarge: const TextStyle(
-        fontFamily: 'IosevkaCharon',
+      headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w400),
+      headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w400),
+      titleLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+      titleMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+      bodyLarge: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w400,
         height: 1.5,
       ),
-      bodyMedium: const TextStyle(
-        fontFamily: 'IosevkaCharon',
+      bodyMedium: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         height: 1.5,
       ),
-      labelLarge: const TextStyle(
-        fontFamily: 'IosevkaCharon',
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-      ),
-      labelSmall: const TextStyle(
-        fontFamily: 'IosevkaCharon',
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-      ),
-      bodySmall: const TextStyle(
-        fontFamily: 'IosevkaCharonMono',
-        fontSize: 13,
-        fontWeight: FontWeight.w400,
-      ),
+      labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
+      bodySmall: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
     );
+
+    return GoogleFonts.instrumentSansTextTheme(base);
   }
 }
