@@ -42,6 +42,11 @@ dependencies:
   rive: ^0.14.8
   shimmer: ^3.0.0
   three_js: ^0.3.0
+  shared_preferences: ^2.5.5
+  path_provider: ^2.1.5
+  connectivity_plus: ^7.1.1
+  file_picker: ^11.0.2
+  webview_flutter: ^4.13.1
 
 dev_dependencies:
   flutter_test:
