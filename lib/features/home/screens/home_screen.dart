@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../providers/download_provider.dart';
+import '../screens/format_picker_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -154,11 +155,27 @@ class _UrlInput extends StatefulWidget {
 
 class _UrlInputState extends State<_UrlInput> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
 
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _submitUrl() {
+    final url = _controller.text.trim();
+    if (url.isEmpty) return;
+    _focusNode.unfocus();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FormatPickerScreen(
+          url: url,
+          title: url,
+        ),
+      ),
+    );
   }
 
   @override
@@ -178,6 +195,7 @@ class _UrlInputState extends State<_UrlInput> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: TextField(
                 controller: _controller,
+                focusNode: _focusNode,
                 decoration: InputDecoration(
                   hintText: 'Enter link......',
                   hintStyle: TextStyle(
@@ -187,6 +205,7 @@ class _UrlInputState extends State<_UrlInput> {
                   isDense: true,
                 ),
                 style: Theme.of(context).textTheme.bodyMedium,
+                onSubmitted: (_) => _submitUrl(),
               ),
             ),
           ),
@@ -197,7 +216,7 @@ class _UrlInputState extends State<_UrlInput> {
               borderRadius: BorderRadius.circular(8),
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
-                onTap: () {},
+                onTap: _submitUrl,
                 child: Container(
                   width: 40,
                   height: 40,
