@@ -35,24 +35,47 @@ class HomeScreen extends ConsumerWidget {
                   .slideY(begin: 0.15, curve: Curves.easeOutCubic),
               const SizedBox(height: 40),
               // Your Library header
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Your Library',
-                  style: textTheme.titleMedium?.copyWith(
-                    color: colorScheme.primary,
+              if (recentDownloads.isNotEmpty) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Your Library',
+                    style: textTheme.titleMedium?.copyWith(
+                      color: colorScheme.primary,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Download cards
-              ...recentDownloads.map((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _DownloadCard(
-                      item: item,
-                      colorScheme: colorScheme,
-                    ),
-                  )),
+                const SizedBox(height: 16),
+                // Download cards
+                ...recentDownloads.map((item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _DownloadCard(
+                        item: item,
+                        colorScheme: colorScheme,
+                      ),
+                    )),
+              ] else ...[
+                const SizedBox(height: 60),
+                Icon(
+                  Icons.cloud_download_outlined,
+                  size: 48,
+                  color: colorScheme.outline.withValues(alpha: 0.4),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No downloads yet',
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Paste a link above to get started',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.outline,
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
             ],
           ),
