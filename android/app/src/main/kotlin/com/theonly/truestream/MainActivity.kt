@@ -209,12 +209,13 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun startProgressPolling(downloadId: String) {
         scope.launch(Dispatchers.IO) {
             val py = Python.getInstance()
             val downloader = py.getModule("truestream_engine.downloader")
-            val activeDownloads = downloader.get("_active_downloads")?.asMap()
-            val downloadInfo = activeDownloads?.get(downloadId)?.asMap()
+            val activeDownloads = downloader.get("_active_downloads")?.asMap() as? Map<String, PyObject>
+            val downloadInfo = activeDownloads?.get(downloadId)?.asMap() as? Map<String, PyObject>
             val progressQueue = downloadInfo?.get("progress_queue")
             val resultQueue = downloadInfo?.get("result_queue")
 
