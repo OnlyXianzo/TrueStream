@@ -34,7 +34,7 @@ def classify_error(exc: Exception, stderr: str = "") -> TrueStreamError:
     combined = (msg + " " + stderr).lower()
 
     for keyword, (error_type, recoverable) in _ERROR_MAP.items():
-        if keyword in combined:
+        if keyword.lower() in combined:
             return TrueStreamError(error_type, msg, recoverable)
 
     if "HTTP Error" in combined:
