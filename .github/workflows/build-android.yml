@@ -29,6 +29,16 @@ jobs:
         with:
           channel: stable
 
+      - name: Install Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Ensure python3.11 on PATH
+        run: |
+          which python3.11 || sudo ln -sf "$(which python3)" /usr/local/bin/python3.11
+          python3.11 --version
+
       - name: Install CMake 3.31.4
         run: |
           ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
