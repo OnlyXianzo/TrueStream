@@ -239,7 +239,7 @@ class MainActivity : FlutterActivity() {
                 if (!resultEmpty) {
                     try {
                         val resultVal = resultQueue.callAttr("get_nowait")
-                        val resultObj = resultVal.asMap().mapKeys { it.key.toString() }.mapValues { it.value.toJava() }
+                        val resultObj: Map<String, Any?> = resultVal.asMap().mapKeys { it.key.toString() }.mapValues { it.value.toJava() }
                         val isSuccess = resultObj["success"] as? Boolean ?: false
                         val eventJson = if (isSuccess) {
                             "{\"type\": \"event\", \"event\": \"finished\", \"download_id\": \"$downloadId\"}"
