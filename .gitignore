@@ -47,3 +47,8 @@ app.*.map.json
 # Agent private workspace — never commit
 .agents/
 graphify-out/
+
+# Agent instruction files — never commit (live in .agents/ only)
+AGENTS.md
+CLAUDE.md
+GEMINI.md
