@@ -3,6 +3,15 @@ name: Build Android
 on:
   workflow_dispatch:
   workflow_call:
+    secrets:
+      KEYSTORE_BASE64:
+        required: false
+      KEYSTORE_PASSWORD:
+        required: false
+      KEY_PASSWORD:
+        required: false
+      KEY_ALIAS:
+        required: false
 
 jobs:
   build:
