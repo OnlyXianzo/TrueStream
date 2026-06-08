@@ -2,11 +2,17 @@ import 'dart:io' show Platform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'engine_service.dart';
 import 'platform_channel_engine_service.dart';
+import 'desktop_engine_service.dart';
 import 'mock_engine_service.dart';
 
 final engineProvider = Provider<EngineService>((ref) {
   if (Platform.isAndroid) {
     final engine = PlatformChannelEngineService();
+    _schedulePaths(engine);
+    return engine;
+  }
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    final engine = DesktopEngineService();
     _schedulePaths(engine);
     return engine;
   }
