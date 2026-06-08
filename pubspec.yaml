@@ -31,8 +31,16 @@ dependencies:
   flutter:
     sdk: flutter
 
-  google_fonts: ^6.2.1
+  animations: ^2.2.0
   cupertino_icons: ^1.0.8
+  flutter_animate: ^4.5.2
+  flutter_staggered_animations: ^1.1.1
+  glassmorphic_ui_kit: ^1.1.6
+  google_fonts: ^6.2.1
+  lottie: ^3.3.2
+  rive: ^0.14.8
+  shimmer: ^3.0.0
+  three_js: ^0.3.0
 
 dev_dependencies:
   flutter_test:

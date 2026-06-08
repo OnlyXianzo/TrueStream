@@ -48,7 +48,12 @@ app.*.map.json
 .agents/
 graphify-out/
 
+# Skills tooling
+skills-lock.json
+
 # Agent instruction files — never commit (live in .agents/ only)
 AGENTS.md
 CLAUDE.md
 GEMINI.md
+.gemini/
+.opencode/
