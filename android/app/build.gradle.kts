@@ -6,6 +6,7 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.chaquo.python")
 }
 
 fun loadKeystoreProperties(): Properties? {
@@ -34,10 +35,22 @@ android {
         applicationId = "com.theonly.truestream"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 24 // Chaquopy requires minSdk >= 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        ndk {
+            abiFilters.addAll(setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+        }
+
+        python {
+            version = "3.11"
+            pip {
+                install("yt-dlp>=2025.0.0")
+                install("quickjs")
+            }
+        }
     }
 
     signingConfigs {

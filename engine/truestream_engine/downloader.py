@@ -42,6 +42,7 @@ def download_thread(
             config=config,
             network_type=network_type,
             progress_queue=prog_q,
+            download_id=download_id,
         )
 
         if get_paths().get("cache_dir"):

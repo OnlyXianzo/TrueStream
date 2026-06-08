@@ -37,7 +37,7 @@ def classify_error(exc: Exception, stderr: str = "") -> TrueStreamError:
         if keyword.lower() in combined:
             return TrueStreamError(error_type, msg, recoverable)
 
-    if "HTTP Error" in combined:
+    if "http error" in combined:
         return TrueStreamError("ERROR_NETWORK", msg, True)
 
     return TrueStreamError("ERROR_UNKNOWN", msg, True)

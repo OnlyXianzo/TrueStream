@@ -10,12 +10,9 @@ _POSTPROCESSOR_STAGES = {
 }
 
 
-def build_progress_hook(queue: _queue.Queue):
-    from yt_dlp import YoutubeDL
-
+def build_progress_hook(queue: _queue.Queue, download_id: str):
     def progress_hook(d: dict):
         status = d.get("status", "")
-        download_id = d.get("info_dict", {}).get("__download_id", "")
 
         if status == "downloading":
             queue.put(json.dumps({
@@ -52,6 +49,10 @@ def build_progress_hook(queue: _queue.Queue):
                 "recoverable": True,
             }))
 
+    return progress_hook
+
+
+def build_postprocessor_hook(queue: _queue.Queue, download_id: str):
     def postprocessor_hook(d: dict):
         status = d.get("status", "")
         pp_key = d.get("postprocessor", "")
@@ -66,4 +67,4 @@ def build_progress_hook(queue: _queue.Queue):
                 "stage_label": label,
             }))
 
-    return progress_hook
+    return postprocessor_hook

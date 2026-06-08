@@ -1,7 +1,7 @@
 from truestream_engine.config import DEFAULT_CFG
 from truestream_engine.paths import get_paths
 from truestream_engine.format_selector import build_format_string
-from truestream_engine.hooks import build_progress_hook
+from truestream_engine.hooks import build_progress_hook, build_postprocessor_hook
 
 
 def build_ydl_opts(
@@ -11,6 +11,7 @@ def build_ydl_opts(
     override_format: str | None = None,
     override_audio: bool | None = None,
     override_container: str | None = None,
+    download_id: str | None = None,
 ) -> dict:
     cfg = {**DEFAULT_CFG, **(config or {})}
     paths = get_paths()
@@ -163,8 +164,8 @@ def build_ydl_opts(
         opts["compat_opts"] = [cfg["compat_options"]]
 
     if progress_queue is not None:
-        opts["progress_hooks"] = [build_progress_hook(progress_queue)]
-        opts["postprocessor_hooks"] = [build_progress_hook(progress_queue)]
+        opts["progress_hooks"] = [build_progress_hook(progress_queue, download_id or "")]
+        opts["postprocessor_hooks"] = [build_postprocessor_hook(progress_queue, download_id or "")]
 
     opts["continuedl"] = True
 

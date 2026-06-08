@@ -1,44 +1,152 @@
 import sys
 import json
-from pathlib import Path
-
-from truestream_engine.paths import set_paths
-from truestream_engine.bootstrap import bootstrap
-from truestream_engine.formats import get_formats
-
-
-def cmd_bootstrap():
-    result = bootstrap()
-    print(json.dumps(result, indent=2, default=str))
-
-
-def cmd_formats(url: str):
-    result = get_formats(url)
-    print(json.dumps(result, indent=2, default=str))
+import threading
+import time
+from truestream_engine import (
+    set_paths,
+    bootstrap,
+    get_formats,
+    get_playlist_info,
+    scan_resume_candidates,
+    start_download,
+    cancel_download,
+)
+from truestream_engine.downloader import _active_downloads, _downloads_lock
 
 
-def cmd_help():
-    print("Usage: python -m truestream_engine <command> [args]")
-    print()
-    print("Commands:")
-    print("  bootstrap            Check engine health")
-    print("  formats <url>        List available formats for URL")
-    print("  help                 Show this help")
+def poll_queues():
+    while True:
+        # Check active downloads and read queues
+        with _downloads_lock:
+            active_ids = list(_active_downloads.keys())
+        
+        for download_id in active_ids:
+            with _downloads_lock:
+                info = _active_downloads.get(download_id)
+                if not info:
+                    continue
+                prog_q = info.get("progress_queue")
+                res_q = info.get("result_queue")
+            
+            # Read progress queue
+            if prog_q:
+                while not prog_q.empty():
+                    try:
+                        event_str = prog_q.get_nowait()
+                        # print event on a single line
+                        print(event_str, flush=True)
+                    except Exception:
+                        break
+            
+            # Read result queue
+            if res_q:
+                while not res_q.empty():
+                    try:
+                        res = res_q.get_nowait()
+                        is_success = res.get("success", False)
+                        if is_success:
+                            event = {
+                                "type": "event",
+                                "event": "finished",
+                                "download_id": download_id,
+                            }
+                        else:
+                            event = {
+                                "type": "event",
+                                "event": "error",
+                                "download_id": download_id,
+                                "error_type": res.get("error_type", "ERROR_UNKNOWN"),
+                                "error_message": res.get("error_message", "Unknown error"),
+                                "recoverable": res.get("recoverable", True),
+                            }
+                        print(json.dumps(event), flush=True)
+                    except Exception:
+                        break
+        
+        time.sleep(0.1)
 
 
 def main():
-    if len(sys.argv) < 2:
-        cmd_help()
+    # If running as standard CLI tool (not persistent IPC) with command args:
+    if len(sys.argv) > 1:
+        command = sys.argv[1]
+        if command == "bootstrap":
+            print(json.dumps(bootstrap()))
+        elif command == "formats" and len(sys.argv) >= 3:
+            print(json.dumps(get_formats(sys.argv[2])))
+        else:
+            print(f"Unknown CLI command: {command}")
         return
 
-    command = sys.argv[1]
+    # Start queue polling thread
+    threading.Thread(target=poll_queues, daemon=True).start()
 
-    if command == "bootstrap":
-        cmd_bootstrap()
-    elif command == "formats" and len(sys.argv) >= 3:
-        cmd_formats(sys.argv[2])
-    else:
-        cmd_help()
+    # Otherwise, enter persistent JSON-RPC stdin loop
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            req = json.loads(line)
+            req_id = req.get("id")
+            method = req.get("method")
+            params = req.get("params", {})
+
+            res = None
+            if method == "paths/set":
+                set_paths(
+                    data_dir=params["data_dir"],
+                    output_dir=params["output_dir"],
+                    ffmpeg_path=params["ffmpeg_path"],
+                    cache_dir=params["cache_dir"],
+                    cookies_path=params.get("cookies_path"),
+                    aria2c_path=params.get("aria2c_path"),
+                    po_token=params.get("po_token")
+                )
+                res = {"success": True}
+            elif method == "engine/bootstrap":
+                res = bootstrap()
+            elif method == "download/start":
+                res = start_download(
+                    url=params["url"],
+                    download_id=params["download_id"],
+                    config=params.get("config"),
+                    network_type=params.get("network_type", "wifi")
+                )
+            elif method == "download/cancel":
+                res = cancel_download(params["download_id"])
+            elif method == "formats/get":
+                res = get_formats(params["url"], params.get("config"))
+            elif method == "playlist/info":
+                res = get_playlist_info(params["url"], params.get("config"))
+            elif method == "resume/scan":
+                res = scan_resume_candidates(params["cache_dir"])
+            else:
+                res = {
+                    "success": False,
+                    "error_type": "ERROR_UNKNOWN_METHOD",
+                    "error_message": f"Method {method} not found"
+                }
+
+            # Send response back
+            response = {"id": req_id}
+            if isinstance(res, dict) and res.get("success") is False:
+                response["error"] = res
+            else:
+                response["result"] = res
+            
+            print(json.dumps(response), flush=True)
+
+        except Exception as e:
+            err_res = {
+                "id": None,
+                "error": {
+                    "success": False,
+                    "error_type": "ERROR_INTERNAL",
+                    "error_message": str(e)
+                }
+            }
+            print(json.dumps(err_res), flush=True)
 
 
 if __name__ == "__main__":

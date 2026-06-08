@@ -51,6 +51,7 @@ def get_formats(url: str, config: dict | None = None) -> dict:
                 "abr": f.get("abr"),
                 "filesize": f.get("filesize"),
                 "filesize_is_estimate": f.get("filesize") is None,
+                "is_hdr": "hdr" in str(f.get("dynamic_range", "")).lower(),
                 "dynamic_range": f.get("dynamic_range", "SDR"),
                 "stream_type": "audio" if f.get("vcodec") == "none" else "video",
             })

@@ -69,6 +69,7 @@ def load_site_profiles() -> dict:
 
 
 def load_site_profiles_from_url(url: str) -> dict:
+    global _SITE_PROFILES_CACHE
     try:
         req = Request(url, headers={"User-Agent": "TrueStream/1.0"})
         with urlopen(req, timeout=5) as resp:
