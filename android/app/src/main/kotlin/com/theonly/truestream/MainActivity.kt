@@ -208,7 +208,7 @@ class MainActivity : FlutterActivity() {
         val rawMap = asMap() as Map<Any?, PyObject>
         val result = mutableMapOf<String, Any?>()
         for ((key, value) in rawMap) {
-            result[key.toString()] = value.toJava()
+            result[key.toString()] = value.toJava(Any::class.java)
         }
         return result
     }
@@ -224,17 +224,19 @@ class MainActivity : FlutterActivity() {
         scope.launch(Dispatchers.IO) {
             val py = Python.getInstance()
             val downloader = py.getModule("truestream_engine.downloader")
-            val activeDownloads = downloader.get("_active_downloads")?.asMap() as? Map<Any?, PyObject>
-            val downloadInfo = activeDownloads?.get(downloadId)?.asMap() as? Map<Any?, PyObject>
-            val progressQueue = downloadInfo?.get("progress_queue")
-            val resultQueue = downloadInfo?.get("result_queue")
+            val rawDownloadsMap = downloader.get("_active_downloads")?.asMap()
+            val downloadInfo = (rawDownloadsMap as? Map<*, *>)?.get(downloadId)?.let {
+                (it as? PyObject)?.asMap()
+            }
+            val progressQueue = (downloadInfo as? Map<*, *>)?.get("progress_queue") as? PyObject
+            val resultQueue = downloadInfo?.get("result_queue") as? PyObject
 
             if (progressQueue == null || resultQueue == null) return@launch
 
             var isDone = false
             while (!isDone && coroutineContext.isActive) {
-                val empty = progressQueue.callAttr("empty").asBoolean()
-                if (!empty) {
+                val isEmpty = progressQueue.callAttr("empty").toJava(Boolean::class.java) as Boolean
+                if (!isEmpty) {
                     try {
                         val item = progressQueue.callAttr("get_nowait")
                         val jsonStr = item.toString()
@@ -246,8 +248,8 @@ class MainActivity : FlutterActivity() {
                     }
                 }
 
-                val resultEmpty = resultQueue.callAttr("empty").asBoolean()
-                if (!resultEmpty) {
+                val isResultEmpty = resultQueue.callAttr("empty").toJava(Boolean::class.java) as Boolean
+                if (!isResultEmpty) {
                     try {
                         val resultVal = resultQueue.callAttr("get_nowait")
                         val resultObj = resultVal.toJavaMap()
