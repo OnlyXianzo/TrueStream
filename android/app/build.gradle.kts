@@ -43,14 +43,6 @@ android {
         ndk {
             abiFilters.addAll(setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
-
-        python {
-            version = "3.11"
-            pip {
-                install("yt-dlp>=2025.0.0")
-                install("quickjs")
-            }
-        }
     }
 
     signingConfigs {
@@ -68,6 +60,16 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+        }
+    }
+}
+
+chaquopy {
+    defaultConfig {
+        version = "3.11"
+        pip {
+            install("yt-dlp>=2025.0.0")
+            install("quickjs")
         }
     }
 }
