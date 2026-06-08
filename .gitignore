@@ -46,3 +46,4 @@ app.*.map.json
 
 # Agent private workspace — never commit
 .agents/
+graphify-out/
