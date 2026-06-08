@@ -57,7 +57,7 @@ flutter:
   uses-material-design: true
 
   fonts:
-    - family: Iosevka Charon
+    - family: IosevkaCharon
       fonts:
         - asset: assets/fonts/IosevkaCharon-Regular.ttf
         - asset: assets/fonts/IosevkaCharon-Italic.ttf
@@ -77,7 +77,7 @@ flutter:
         - asset: assets/fonts/IosevkaCharon-BoldItalic.ttf
           weight: 700
           style: italic
-    - family: Iosevka Charon Mono
+    - family: IosevkaCharonMono
       fonts:
         - asset: assets/fonts/IosevkaCharonMono-Regular.ttf
         - asset: assets/fonts/IosevkaCharonMono-Italic.ttf
