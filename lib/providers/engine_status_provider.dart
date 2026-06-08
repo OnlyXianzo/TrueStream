@@ -6,7 +6,7 @@ class EngineStatus {
   final String? ytDlpVersion;
   final bool ffmpegOk;
   final String? jsRuntime;
-  final bool needsUpdate;
+  final List<String> updateComponents;
   final String? error;
 
   const EngineStatus({
@@ -14,9 +14,26 @@ class EngineStatus {
     this.ytDlpVersion,
     this.ffmpegOk = false,
     this.jsRuntime,
-    this.needsUpdate = false,
+    this.updateComponents = const [],
     this.error,
   });
+
+  String? get statusMessage {
+    if (error != null) return error;
+    if (updateComponents.contains('yt_dlp')) {
+      return 'yt-dlp has a new version — download now';
+    }
+    if (updateComponents.contains('ffmpeg')) {
+      return 'FFmpeg update available';
+    }
+    if (updateComponents.contains('deno')) {
+      return 'Deno update available';
+    }
+    if (updateComponents.contains('aria2c')) {
+      return 'aria2c update available';
+    }
+    return null;
+  }
 }
 
 final engineStatusProvider = FutureProvider<EngineStatus>((ref) async {
@@ -24,12 +41,16 @@ final engineStatusProvider = FutureProvider<EngineStatus>((ref) async {
   try {
     final result = await engine.bootstrap();
     if (result['success'] == true) {
+      final components = (result['update_components'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
       return EngineStatus(
         ready: true,
         ytDlpVersion: result['yt_dlp_version'] as String?,
         ffmpegOk: result['ffmpeg_ok'] as bool? ?? false,
         jsRuntime: result['js_runtime'] as String?,
-        needsUpdate: result['needs_update'] as bool? ?? false,
+        updateComponents: components,
       );
     }
     return EngineStatus(

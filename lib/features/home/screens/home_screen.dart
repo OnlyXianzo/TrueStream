@@ -424,36 +424,37 @@ class _EngineStatusBanner extends ConsumerWidget {
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (status) {
-        if (status.ready && !status.needsUpdate) return const SizedBox.shrink();
+        final message = status.statusMessage;
+        if (message == null) return const SizedBox.shrink();
+
+        final hasError = status.error != null;
 
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: status.needsUpdate
-                ? colorScheme.tertiaryContainer
-                : colorScheme.errorContainer,
+            color: hasError
+                ? colorScheme.errorContainer
+                : colorScheme.tertiaryContainer,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
               Icon(
-                status.needsUpdate ? Icons.update : Icons.warning_amber,
+                hasError ? Icons.warning_amber : Icons.system_update,
                 size: 16,
-                color: status.needsUpdate
-                    ? colorScheme.onTertiaryContainer
-                    : colorScheme.onErrorContainer,
+                color: hasError
+                    ? colorScheme.onErrorContainer
+                    : colorScheme.onTertiaryContainer,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  status.needsUpdate
-                      ? 'Engine update available'
-                      : (status.error ?? 'Engine not ready'),
+                  message,
                   style: textTheme.labelSmall?.copyWith(
-                    color: status.needsUpdate
-                        ? colorScheme.onTertiaryContainer
-                        : colorScheme.onErrorContainer,
+                    color: hasError
+                        ? colorScheme.onErrorContainer
+                        : colorScheme.onTertiaryContainer,
                   ),
                 ),
               ),
