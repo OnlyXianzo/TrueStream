@@ -148,7 +148,14 @@ class _SettingSwitch extends StatelessWidget {
           Switch.adaptive(
             value: value,
             onChanged: (_) => onChanged(),
-            activeTrackColor: colorScheme.primaryContainer,
+            activeTrackColor: colorScheme.primary,
+            inactiveTrackColor: colorScheme.surfaceContainerHighest,
+            thumbColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return colorScheme.onPrimary;
+              }
+              return colorScheme.outline;
+            }),
           ),
         ],
       ),
