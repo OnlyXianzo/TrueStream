@@ -87,8 +87,6 @@ class DownloadNotifier extends StateNotifier<List<DownloadItem>> {
       }).toList();
     } else if (eventType == 'finished') {
       final filesize = event['filesize_bytes'] as int? ?? 0;
-      final filepath = event['filepath'] as String? ?? '';
-      final ext = event['ext'] as String? ?? '';
       final sizeStr = _formatFilesize(filesize);
 
       state = state.map((d) {

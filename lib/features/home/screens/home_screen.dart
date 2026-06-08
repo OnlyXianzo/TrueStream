@@ -422,7 +422,7 @@ class _EngineStatusBanner extends ConsumerWidget {
 
     return statusAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (status) {
         final message = status.statusMessage;
         if (message == null) return const SizedBox.shrink();

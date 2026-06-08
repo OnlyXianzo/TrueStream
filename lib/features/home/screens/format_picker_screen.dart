@@ -4,7 +4,6 @@ import 'package:uuid/uuid.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../core/engine/engine_provider.dart';
 import '../../../providers/download_provider.dart';
-import '../../../providers/settings_provider.dart';
 
 const _uuid = Uuid();
 
@@ -86,7 +85,6 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
 
     final downloadId = _uuid.v4();
     final engine = ref.read(engineProvider);
-    final settings = ref.read(settingsProvider.notifier);
 
     final config = <String, dynamic>{
       'container': _selectedContainer,
