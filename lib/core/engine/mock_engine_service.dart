@@ -42,7 +42,7 @@ class MockEngineService implements EngineService {
           'total_bytes_is_estimate': false,
           'speed': 2097152.0,
           'eta': 23,
-          'filename': 'working_cache/$downloadId_video.mp4',
+          'filename': 'working_cache/${downloadId}_video.mp4',
           'fragment_index': null,
           'fragment_count': null,
           'stream': null,

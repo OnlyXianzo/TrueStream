@@ -19,7 +19,7 @@ void main() {
         child: const TrueStreamApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
     expect(find.text('TrueStream'), findsOneWidget);
   });
 }
