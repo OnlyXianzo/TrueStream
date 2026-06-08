@@ -57,11 +57,16 @@ class SettingsScreen extends ConsumerWidget {
                 onChanged: () => ref.read(settingsProvider.notifier).toggleCompletionAlerts(),
                 colorScheme: colorScheme,
               ).animate().fadeIn(delay: 240.ms, duration: 300.ms).slideX(begin: 0.1),
+              _SettingThemeSelector(
+                currentTheme: settings.themeMode,
+                onChanged: (mode) => ref.read(settingsProvider.notifier).setThemeMode(mode),
+                colorScheme: colorScheme,
+              ).animate().fadeIn(delay: 280.ms, duration: 300.ms).slideX(begin: 0.1),
               _SettingAction(
                 icon: Icons.history,
                 title: 'Clear Search History',
                 colorScheme: colorScheme,
-              ).animate().fadeIn(delay: 320.ms, duration: 300.ms).slideX(begin: 0.1),
+              ).animate().fadeIn(delay: 360.ms, duration: 300.ms).slideX(begin: 0.1),
               const SizedBox(height: 32),
               // Version badge
               Center(
@@ -75,7 +80,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                   child: Text(
-                    'Version 1.0.0 (Stable)',
+                    'unstable pre-release',
                     style: textTheme.labelSmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                       letterSpacing: 1.5,
@@ -236,6 +241,76 @@ class _SettingAction extends StatelessWidget {
           Text(
             title,
             style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingThemeSelector extends StatelessWidget {
+  final AppThemeMode currentTheme;
+  final ValueChanged<AppThemeMode> onChanged;
+  final ColorScheme colorScheme;
+
+  const _SettingThemeSelector({
+    required this.currentTheme,
+    required this.onChanged,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.palette_outlined, color: colorScheme.outline, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Appearance', style: textTheme.bodyLarge),
+                Text(
+                  'Choose Light, Dark, or System mode',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          DropdownButton<AppThemeMode>(
+            value: currentTheme,
+            onChanged: (val) {
+              if (val != null) onChanged(val);
+            },
+            dropdownColor: colorScheme.surfaceContainerHigh,
+            items: const [
+              DropdownMenuItem(
+                value: AppThemeMode.system,
+                child: Text('System'),
+              ),
+              DropdownMenuItem(
+                value: AppThemeMode.light,
+                child: Text('Light'),
+              ),
+              DropdownMenuItem(
+                value: AppThemeMode.dark,
+                child: Text('Dark'),
+              ),
+            ],
           ),
         ],
       ),

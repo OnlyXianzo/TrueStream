@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/theme/text_styles.dart';
 import '../../../providers/download_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -108,7 +109,7 @@ class _HeroSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Unlock Your Video Universe: Download Now!',
+          'Every source. Maximum quality.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 fontStyle: FontStyle.italic,
@@ -270,7 +271,7 @@ class _DownloadCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${_formatBytes(item.downloadedBytes)} / ${_formatBytes(item.totalBytes)}',
-                      style: textTheme.labelSmall?.copyWith(
+                      style: textTheme.mono.copyWith(
                         color: colorScheme.outline,
                       ),
                     ),
@@ -279,7 +280,7 @@ class _DownloadCard extends StatelessWidget {
                       children: [
                         Text(
                           '${(item.progress * 100).toInt()} % downloading',
-                          style: textTheme.labelSmall?.copyWith(
+                          style: textTheme.mono.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.primary,
                           ),
@@ -311,7 +312,7 @@ class _DownloadCard extends StatelessWidget {
                             ),
                             child: Text(
                               item.fileSize!,
-                              style: textTheme.labelSmall?.copyWith(
+                              style: textTheme.mono.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: colorScheme.onSurfaceVariant,
                                 fontSize: 10,

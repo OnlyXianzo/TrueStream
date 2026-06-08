@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/text_styles.dart';
 import '../../../providers/download_provider.dart';
 
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -260,13 +261,13 @@ class _LibraryItem extends StatelessWidget {
                     children: [
                       Text(
                         '${(item.progress * 100).toInt()} % downloading',
-                        style: textTheme.labelSmall?.copyWith(
+                        style: textTheme.mono.copyWith(
                           color: colorScheme.primary,
                         ),
                       ),
                       Text(
                         '${_formatBytes(item.downloadedBytes)}/${_formatBytes(item.totalBytes)}',
-                        style: textTheme.labelSmall?.copyWith(
+                        style: textTheme.mono.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -278,7 +279,7 @@ class _LibraryItem extends StatelessWidget {
                     children: [
                       Text(
                         item.completedDate ?? 'Unknown',
-                        style: textTheme.labelSmall?.copyWith(
+                        style: textTheme.mono.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -294,7 +295,7 @@ class _LibraryItem extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         item.fileSize ?? '',
-                        style: textTheme.labelSmall?.copyWith(
+                        style: textTheme.mono.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
