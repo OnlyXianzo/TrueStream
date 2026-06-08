@@ -225,11 +225,12 @@ class MainActivity : FlutterActivity() {
             val py = Python.getInstance()
             val downloader = py.getModule("truestream_engine.downloader")
             val rawDownloadsMap = downloader.get("_active_downloads")?.asMap()
-            val downloadInfo = (rawDownloadsMap as? Map<*, *>)?.get(downloadId)?.let {
+            val downloads = rawDownloadsMap as? Map<Any?, Any?>
+            val downloadInfo = downloads?.get(downloadId)?.let {
                 (it as? PyObject)?.asMap()
             }
-            val progressQueue = (downloadInfo as? Map<*, *>)?.get("progress_queue") as? PyObject
-            val resultQueue = downloadInfo?.get("result_queue") as? PyObject
+            val progressQueue = (downloadInfo as? Map<Any?, Any?>)?.get("progress_queue") as? PyObject
+            val resultQueue = (downloadInfo as? Map<Any?, Any?>)?.get("result_queue") as? PyObject
 
             if (progressQueue == null || resultQueue == null) return@launch
 
