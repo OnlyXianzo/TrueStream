@@ -58,6 +58,79 @@ class DownloadNotifier extends StateNotifier<List<DownloadItem>> {
       );
     }).toList();
   }
+
+  void handleProgressEvent(Map<String, dynamic> event) {
+    final downloadId = event['download_id'] as String?;
+    if (downloadId == null) return;
+
+    final eventType = event['event'] as String?;
+
+    if (eventType == 'downloading') {
+      final downloaded = event['downloaded_bytes'] as int? ?? 0;
+      final total = event['total_bytes'] as int? ?? 0;
+      final progress = total > 0 ? downloaded / total : 0.0;
+      updateProgress(downloadId, progress, downloaded);
+
+      state = state.map((d) {
+        if (d.id != downloadId) return d;
+        return DownloadItem(
+          id: d.id,
+          title: d.title,
+          url: d.url,
+          status: 'downloading',
+          progress: progress,
+          downloadedBytes: downloaded,
+          totalBytes: total,
+          thumbnailUrl: d.thumbnailUrl,
+          addedAt: d.addedAt,
+        );
+      }).toList();
+    } else if (eventType == 'finished') {
+      final filesize = event['filesize_bytes'] as int? ?? 0;
+      final filepath = event['filepath'] as String? ?? '';
+      final ext = event['ext'] as String? ?? '';
+      final sizeStr = _formatFilesize(filesize);
+
+      state = state.map((d) {
+        if (d.id != downloadId) return d;
+        return DownloadItem(
+          id: d.id,
+          title: d.title,
+          url: d.url,
+          status: 'completed',
+          progress: 1.0,
+          downloadedBytes: filesize,
+          totalBytes: filesize,
+          thumbnailUrl: d.thumbnailUrl,
+          addedAt: d.addedAt,
+          fileSize: sizeStr,
+          completedDate: 'Today',
+        );
+      }).toList();
+    } else if (eventType == 'error') {
+      state = state.map((d) {
+        if (d.id != downloadId) return d;
+        return DownloadItem(
+          id: d.id,
+          title: d.title,
+          url: d.url,
+          status: 'error',
+          progress: d.progress,
+          downloadedBytes: d.downloadedBytes,
+          totalBytes: d.totalBytes,
+          thumbnailUrl: d.thumbnailUrl,
+          addedAt: d.addedAt,
+        );
+      }).toList();
+    }
+  }
+
+  String _formatFilesize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1048576) return '${(bytes / 1024).toStringAsFixed(0)} KB';
+    if (bytes < 1073741824) return '${(bytes / 1048576).toStringAsFixed(1)} MB';
+    return '${(bytes / 1073741824).toStringAsFixed(2)} GB';
+  }
 }
 
 final downloadProvider =

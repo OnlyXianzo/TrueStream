@@ -2,14 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../core/engine/engine_provider.dart';
 import '../../../providers/download_provider.dart';
 import '../screens/format_picker_screen.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _listenToProgress();
+  }
+
+  void _listenToProgress() {
+    final engine = ref.read(engineProvider);
+    engine.progressStream.listen((event) {
+      ref.read(downloadProvider.notifier).handleProgressEvent(event);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final downloads = ref.watch(downloadProvider);
     final recentDownloads = downloads.take(3).toList();
     final colorScheme = Theme.of(context).colorScheme;
