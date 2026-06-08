@@ -1,0 +1,18 @@
+[project]
+name = "truestream-engine"
+version = "1.0.0"
+description = "TrueStream download engine — yt-dlp Python API wrapper"
+requires-python = ">=3.11"
+dependencies = [
+    "yt-dlp>=2025.0.0",
+]
+optional-dependencies = {
+    "quickjs" = ["python-quickjs>=0.8.0"],
+}
+
+[project.urls]
+"Source" = "https://github.com/OnlyXianzo/TrueStream"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"

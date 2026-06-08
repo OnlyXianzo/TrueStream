@@ -1,0 +1,2 @@
+yt-dlp>=2025.0.0
+# python-quickjs>=0.8.0  # uncomment for Android/QuickJS PO Token support

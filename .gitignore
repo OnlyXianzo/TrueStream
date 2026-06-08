@@ -39,6 +39,17 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
+# Python engine
+__pycache__/
+*.pyc
+*.pyo
+.env/
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile

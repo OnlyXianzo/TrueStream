@@ -1,0 +1,53 @@
+DEFAULT_CFG = {
+    # ── Format ──────────────────────────────────────────────────────────
+    "format_code": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best",
+    "audio_only": False,
+    "container": "mkv",
+    "audio_format": "opus",
+    "quality_ceiling": "4k",
+    # ── Metadata ────────────────────────────────────────────────────────
+    "embedthumbnail": True,
+    "addmetadata": True,
+    # ── Subtitles ───────────────────────────────────────────────────────
+    "writesubtitles": False,
+    "writeautomaticsub": False,
+    "subtitleslangs": ["en"],
+    "embedsubtitles": True,
+    # ── SponsorBlock ────────────────────────────────────────────────────
+    "sponsorblock_cats": [],
+    # ── Chapters ────────────────────────────────────────────────────────
+    "split_chapters": False,
+    # ── Network ─────────────────────────────────────────────────────────
+    "rate_limit": "",
+    "use_aria2": False,
+    "concurrent_fragments": 4,
+    "socket_timeout": 30,
+    "proxy": "",
+    "geo_bypass": True,
+    # ── Retry ───────────────────────────────────────────────────────────
+    "retries": 10,
+    "fragment_retries": 10,
+    "sleep_interval": "0",
+    # ── Playlist ────────────────────────────────────────────────────────
+    "no_playlist": False,
+    "playlist_items": "",
+    "playlist_rev": False,
+    "playlist_rand": False,
+    # ── Archive ─────────────────────────────────────────────────────────
+    "use_archive": False,
+    "archive_path": None,
+    # ── Live ────────────────────────────────────────────────────────────
+    "live_from_start": False,
+    # ── Auth / bypass ───────────────────────────────────────────────────
+    "anonymous_first": True,
+    "quality_threshold_height": 720,
+    # ── Extras ──────────────────────────────────────────────────────────
+    "write_description": False,
+    "write_info_json": False,
+    "compat_options": "",
+    "verbose": False,
+    "output_tmpl": "%(uploader)s - %(title)s.%(ext)s",
+    # ── Explicit override (Format Picker) ───────────────────────────────
+    "explicit_format_id": None,
+    "explicit_audio_format_id": None,
+}
