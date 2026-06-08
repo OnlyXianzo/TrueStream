@@ -62,6 +62,28 @@ class SettingsScreen extends ConsumerWidget {
                 onChanged: (mode) => ref.read(settingsProvider.notifier).setThemeMode(mode),
                 colorScheme: colorScheme,
               ).animate().fadeIn(delay: 280.ms, duration: 300.ms).slideX(begin: 0.1),
+              _SettingDropdown(
+                icon: Icons.high_quality,
+                title: 'Max Quality',
+                subtitle: 'Highest video resolution to download',
+                value: settings.qualityCeiling,
+                options: const {
+                  '4k': '4K Ultra HD',
+                  '1080p': '1080p Full HD',
+                  '720p': '720p HD',
+                  'best': 'Best Available',
+                },
+                onChanged: (val) => ref.read(settingsProvider.notifier).setQualityCeiling(val),
+                colorScheme: colorScheme,
+              ).animate().fadeIn(delay: 300.ms, duration: 300.ms).slideX(begin: 0.1),
+              _SettingSwitch(
+                icon: Icons.music_note,
+                title: 'Audio Only',
+                subtitle: 'Extract audio without video',
+                value: settings.audioOnly,
+                onChanged: () => ref.read(settingsProvider.notifier).toggleAudioOnly(),
+                colorScheme: colorScheme,
+              ).animate().fadeIn(delay: 320.ms, duration: 300.ms).slideX(begin: 0.1),
               _SettingAction(
                 icon: Icons.history,
                 title: 'Clear Search History',
@@ -318,6 +340,73 @@ class _SettingThemeSelector extends StatelessWidget {
                 child: Text('Dark'),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingDropdown extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String value;
+  final Map<String, String> options;
+  final ValueChanged<String> onChanged;
+  final ColorScheme colorScheme;
+
+  const _SettingDropdown({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: colorScheme.outline, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: textTheme.bodyLarge),
+                Text(
+                  subtitle,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          DropdownButton<String>(
+            value: value,
+            onChanged: (val) {
+              if (val != null) onChanged(val);
+            },
+            dropdownColor: colorScheme.surfaceContainerHigh,
+            items: options.entries
+                .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                .toList(),
           ),
         ],
       ),

@@ -14,6 +14,10 @@ class AppSettings {
   final String downloadPath;
   final AppThemeMode themeMode;
   final bool onboardingCompleted;
+  final String qualityCeiling;
+  final bool audioOnly;
+  final String? proxy;
+  final bool verbose;
 
   const AppSettings({
     this.wifiOnly = false,
@@ -22,6 +26,10 @@ class AppSettings {
     this.downloadPath = '/Internal/Videos',
     this.themeMode = AppThemeMode.light,
     this.onboardingCompleted = false,
+    this.qualityCeiling = '4k',
+    this.audioOnly = false,
+    this.proxy,
+    this.verbose = false,
   });
 
   AppSettings copyWith({
@@ -31,6 +39,10 @@ class AppSettings {
     String? downloadPath,
     AppThemeMode? themeMode,
     bool? onboardingCompleted,
+    String? qualityCeiling,
+    bool? audioOnly,
+    String? proxy,
+    bool? verbose,
   }) {
     return AppSettings(
       wifiOnly: wifiOnly ?? this.wifiOnly,
@@ -39,6 +51,10 @@ class AppSettings {
       downloadPath: downloadPath ?? this.downloadPath,
       themeMode: themeMode ?? this.themeMode,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      qualityCeiling: qualityCeiling ?? this.qualityCeiling,
+      audioOnly: audioOnly ?? this.audioOnly,
+      proxy: proxy ?? this.proxy,
+      verbose: verbose ?? this.verbose,
     );
   }
 }
@@ -61,6 +77,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final downloadPath = _prefs.getString('downloadPath') ?? '/Internal/Videos';
     final themeIndex = _prefs.getInt('themeMode') ?? AppThemeMode.light.index;
     final onboardingCompleted = _prefs.getBool('onboardingCompleted') ?? false;
+    final qualityCeiling = _prefs.getString('qualityCeiling') ?? '4k';
+    final audioOnly = _prefs.getBool('audioOnly') ?? false;
+    final proxy = _prefs.getString('proxy');
+    final verbose = _prefs.getBool('verbose') ?? false;
     
     state = AppSettings(
       wifiOnly: wifiOnly,
@@ -69,6 +89,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       downloadPath: downloadPath,
       themeMode: AppThemeMode.values[themeIndex],
       onboardingCompleted: onboardingCompleted,
+      qualityCeiling: qualityCeiling,
+      audioOnly: audioOnly,
+      proxy: proxy,
+      verbose: verbose,
     );
   }
 
@@ -103,6 +127,32 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void completeOnboarding() {
     _prefs.setBool('onboardingCompleted', true);
     state = state.copyWith(onboardingCompleted: true);
+  }
+
+  void setQualityCeiling(String value) {
+    _prefs.setString('qualityCeiling', value);
+    state = state.copyWith(qualityCeiling: value);
+  }
+
+  void toggleAudioOnly() {
+    final newValue = !state.audioOnly;
+    _prefs.setBool('audioOnly', newValue);
+    state = state.copyWith(audioOnly: newValue);
+  }
+
+  void setProxy(String? value) {
+    if (value == null || value.isEmpty) {
+      _prefs.remove('proxy');
+    } else {
+      _prefs.setString('proxy', value);
+    }
+    state = state.copyWith(proxy: value);
+  }
+
+  void toggleVerbose() {
+    final newValue = !state.verbose;
+    _prefs.setBool('verbose', newValue);
+    state = state.copyWith(verbose: newValue);
   }
 }
 
