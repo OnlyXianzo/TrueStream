@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
+import 'core/engine/engine_provider.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
 import 'features/shell/screens/app_shell.dart';
 import 'providers/settings_provider.dart';
@@ -9,6 +11,9 @@ import 'providers/settings_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
+  final appDir = await getApplicationDocumentsDirectory();
+  final cacheDir = await getTemporaryDirectory();
+  setEngineDirs(appDir.path, cacheDir.path);
   runApp(
     ProviderScope(
       overrides: [

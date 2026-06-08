@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../engine/engine_provider.dart';
+import '../core/engine/engine_provider.dart';
 
 class EngineStatus {
   final bool ready;
