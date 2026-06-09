@@ -4,6 +4,8 @@ import 'package:uuid/uuid.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../core/engine/engine_provider.dart';
 import '../../../providers/download_provider.dart';
+import '../../../providers/playlist_provider.dart';
+import '../../../providers/preset_provider.dart';
 
 const _uuid = Uuid();
 
@@ -47,6 +49,7 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
   List<Map<String, dynamic>> _videoFormats = [];
   List<Map<String, dynamic>> _audioFormats = [];
   String _fetchedTitle = '';
+  Playlist? _selectedPlaylist;
 
   @override
   void initState() {
@@ -105,8 +108,44 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
         _videoFormats = formats.where((f) => f['stream_type'] == 'video').toList();
         _audioFormats = formats.where((f) => f['stream_type'] == 'audio').toList();
         _fetchedTitle = result['title'] as String? ?? widget.title;
-        _selectedVideoFormat = result['recommended_video_format_id'] as String?;
-        _selectedAudioFormat = result['recommended_audio_format_id'] as String?;
+        
+        final activePreset = ref.read(presetsProvider).activePreset;
+        _selectedContainer = activePreset.preferredContainer;
+        
+        if (_audioFormats.isNotEmpty) {
+          _selectedAudioFormat = _audioFormats.first['format_id'] as String?;
+        }
+        
+        if (activePreset.audioOnly) {
+          _selectedVideoFormat = null;
+        } else {
+          int targetHeight = 1080;
+          if (activePreset.qualityCeiling == '4k') {
+            targetHeight = 2160;
+          } else if (activePreset.qualityCeiling == '1080p') {
+            targetHeight = 1080;
+          } else if (activePreset.qualityCeiling == '720p') {
+            targetHeight = 720;
+          } else if (activePreset.qualityCeiling == '480p' || activePreset.id == 'preset_480p') {
+            targetHeight = 480;
+          } else {
+            targetHeight = 99999;
+          }
+          
+          var matchingFormats = _videoFormats.where((f) => (f['height'] as num? ?? 0) <= targetHeight).toList();
+          if (matchingFormats.isEmpty) {
+            matchingFormats = _videoFormats;
+          }
+          
+          var codecFormats = matchingFormats.where((f) => (f['vcodec'] as String? ?? '').toLowerCase().contains(activePreset.preferredCodec.toLowerCase())).toList();
+          if (codecFormats.isNotEmpty) {
+            _selectedVideoFormat = codecFormats.first['format_id'] as String?;
+          } else if (matchingFormats.isNotEmpty) {
+            _selectedVideoFormat = matchingFormats.first['format_id'] as String?;
+          } else {
+            _selectedVideoFormat = result['recommended_video_format_id'] as String?;
+          }
+        }
       } else {
         _error = result['error_message'] as String? ?? 'Failed to load formats';
         _suggestsVpn = _isVpnSuggested(_error!);
@@ -156,6 +195,10 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
           status: 'downloading',
         ),
       );
+
+      if (_selectedPlaylist != null) {
+        ref.read(playlistProvider.notifier).addDownloadToPlaylist(_selectedPlaylist!.id, downloadId);
+      }
 
       if (mounted) {
         Navigator.pop(context);
@@ -297,6 +340,31 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Add to Playlist:', style: textTheme.bodyMedium),
+                            DropdownButton<Playlist?>(
+                              value: _selectedPlaylist,
+                              dropdownColor: colorScheme.surfaceContainerHigh,
+                              hint: const Text('None'),
+                              items: [
+                                const DropdownMenuItem<Playlist?>(
+                                  value: null,
+                                  child: Text('None'),
+                                ),
+                                ...ref.watch(playlistProvider).map((p) => DropdownMenuItem<Playlist?>(
+                                      value: p,
+                                      child: Text(p.name),
+                                    )),
+                              ],
+                              onChanged: (val) {
+                                setState(() => _selectedPlaylist = val);
+                              },
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 32),
                         SizedBox(
                           width: double.infinity,
@@ -371,7 +439,7 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
                         Text(
                           isVideo
                               ? '$formatId · ${fmt['height']}p${fmt['fps']}'
-                              : '$formatId · ${fmt['acodec']} · ${(fmt['abr'] as num).toInt()}kbps',
+                              : '$formatId · ${fmt['acodec'] ?? 'Audio'} · ${fmt['abr'] != null ? (fmt['abr'] as num).toInt() : 'unknown'} kbps',
                           style: textTheme.mono.copyWith(fontWeight: FontWeight.bold),
                         ),
                         if (isHdr) ...[

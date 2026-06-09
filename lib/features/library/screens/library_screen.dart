@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../providers/download_provider.dart';
+import '../../../providers/playlist_provider.dart';
+import 'playlist_details_screen.dart';
 
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
@@ -18,6 +20,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {}); // Rebuild to show/hide FAB based on active tab
+    });
   }
 
   @override
@@ -26,13 +31,63 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     super.dispose();
   }
 
+  void _showCreatePlaylistDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colorScheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('New Playlist', style: textTheme.titleMedium),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Enter playlist name...',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                ref.read(playlistProvider.notifier).createPlaylist(name);
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final downloads = ref.watch(downloadProvider);
+    final playlists = ref.watch(playlistProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
+      floatingActionButton: _tabController.index == 1
+          ? FloatingActionButton.extended(
+              onPressed: () => _showCreatePlaylistDialog(context, ref, colorScheme, textTheme),
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              icon: const Icon(Icons.playlist_add),
+              label: const Text('New Playlist'),
+            )
+          : null,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +128,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 controller: _tabController,
                 children: [
                   _buildLibraryContent(downloads, colorScheme, textTheme),
-                  _buildPlaylistsTab(colorScheme, textTheme),
+                  _buildPlaylistsTab(playlists, colorScheme, textTheme),
                 ],
               ),
             ),
@@ -143,25 +198,85 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     );
   }
 
-  Widget _buildPlaylistsTab(ColorScheme colorScheme, TextTheme textTheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.playlist_add,
-            size: 64,
-            color: colorScheme.outline.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No playlists yet',
-            style: textTheme.bodyLarge?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+  Widget _buildPlaylistsTab(
+    List<Playlist> playlists,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
+    if (playlists.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.playlist_add,
+              size: 64,
+              color: colorScheme.outline.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No playlists yet',
+              style: textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => _showCreatePlaylistDialog(context, ref, colorScheme, textTheme),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+              ),
+              child: const Text('Create Playlist'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      itemCount: playlists.length,
+      itemBuilder: (context, index) {
+        final playlist = playlists[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          elevation: 0,
+          color: colorScheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
             ),
           ),
-        ],
-      ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: CircleAvatar(
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+              child: Icon(Icons.playlist_play, color: colorScheme.primary),
+            ),
+            title: Text(
+              playlist.name,
+              style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Text(
+                '${playlist.downloadIds.length} items',
+                style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+              ),
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PlaylistDetailsScreen(playlistId: playlist.id),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
