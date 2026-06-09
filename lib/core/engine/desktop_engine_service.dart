@@ -64,10 +64,31 @@ class DesktopEngineService implements EngineService {
       }
     }
 
+    // Set up PYTHONPATH environment variable to include the executable directory
+    // and development paths so python can always find 'truestream_engine'.
+    final env = Map<String, String>.from(Platform.environment);
+    final pythonPaths = <String>[];
+
+    // Add directory containing the app executable (production bundle path)
+    final executableDir = File(Platform.resolvedExecutable).parent.path;
+    pythonPaths.add(executableDir);
+
+    // Add development directory paths
+    final currentDir = Directory.current.path;
+    pythonPaths.add('$currentDir/engine');
+    pythonPaths.add('$currentDir/Project-TrueStream/engine');
+
+    if (env.containsKey('PYTHONPATH')) {
+      pythonPaths.add(env['PYTHONPATH']!);
+    }
+
+    env['PYTHONPATH'] = pythonPaths.join(Platform.isWindows ? ';' : ':');
+
     _process = await Process.start(
       executable,
       ['-m', 'truestream_engine'],
       workingDirectory: _workingDirectory,
+      environment: env,
       runInShell: true,
     );
 

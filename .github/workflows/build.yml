@@ -90,6 +90,9 @@ jobs:
       - name: Build Windows App
         run: flutter build windows --release
 
+      - name: Copy Python Engine to Bundle
+        run: xcopy /E /I engine\truestream_engine build\windows\x64\runner\Release\truestream_engine
+
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -126,6 +129,9 @@ jobs:
 
       - name: Build Linux App
         run: flutter build linux --release
+
+      - name: Copy Python Engine to Bundle
+        run: cp -r engine/truestream_engine build/linux/x64/release/bundle/
 
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
