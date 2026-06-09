@@ -50,8 +50,22 @@ class DesktopEngineService implements EngineService {
     }
 
     _reconnectAttempts++;
+
+    // Resolve python executable path dynamically on Unix platforms
+    String executable = _pythonPath;
+    if (executable == 'python' && (Platform.isLinux || Platform.isMacOS)) {
+      try {
+        final result = await Process.run('which', ['python3']);
+        if (result.exitCode == 0 && result.stdout.toString().trim().isNotEmpty) {
+          executable = 'python3';
+        }
+      } catch (_) {
+        executable = 'python3';
+      }
+    }
+
     _process = await Process.start(
-      _pythonPath,
+      executable,
       ['-m', 'truestream_engine'],
       workingDirectory: _workingDirectory,
       runInShell: true,
