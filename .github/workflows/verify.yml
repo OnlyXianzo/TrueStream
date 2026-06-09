@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  analyze:
-    name: Flutter Analyze
+  flutter_verify:
+    name: Flutter Analyze & Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,38 +17,30 @@ jobs:
         with:
           channel: stable
 
-      - run: flutter pub get
+      - name: Install dependencies
+        run: flutter pub get
 
-      - run: flutter analyze
+      - name: Run static analysis
+        run: flutter analyze
 
-  flutter_test:
-    name: Flutter Unit/Widget Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - name: Run widget & unit tests
+        run: flutter test
 
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-
-      - run: flutter pub get
-
-      - run: flutter test
-
-  python_test:
+  python_verify:
     name: Python Engine Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install uv
         run: pip install uv
 
-      - name: Install engine + deps
+      - name: Install dependencies & engine
         run: uv pip install --system yt-dlp pytest -e engine/
 
       - name: Run engine tests
