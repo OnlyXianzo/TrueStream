@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../providers/settings_provider.dart';
+import 'presets_screen.dart';
+import 'about_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -48,7 +51,34 @@ class SettingsScreen extends ConsumerWidget {
                 title: 'Download Path',
                 subtitle: settings.downloadPath,
                 colorScheme: colorScheme,
+                onTap: () async {
+                  try {
+                    final selectedDirectory = await FilePicker.getDirectoryPath();
+                    if (selectedDirectory != null && context.mounted) {
+                      ref.read(settingsProvider.notifier).setDownloadPath(selectedDirectory);
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error picking folder: $e')),
+                      );
+                    }
+                  }
+                },
               ).animate().fadeIn(delay: 160.ms, duration: 300.ms).slideX(begin: 0.1),
+              _SettingNavItem(
+                icon: Icons.tune,
+                title: 'Download Presets',
+                subtitle: 'Configure quality & container settings',
+                colorScheme: colorScheme,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const PresetsScreen(),
+                    ),
+                  );
+                },
+              ).animate().fadeIn(delay: 200.ms, duration: 300.ms).slideX(begin: 0.1),
               _SettingSwitch(
                 icon: Icons.notifications_outlined,
                 title: 'Download Completion Alerts',
@@ -62,27 +92,18 @@ class SettingsScreen extends ConsumerWidget {
                 onChanged: (mode) => ref.read(settingsProvider.notifier).setThemeMode(mode),
                 colorScheme: colorScheme,
               ).animate().fadeIn(delay: 280.ms, duration: 300.ms).slideX(begin: 0.1),
-              _SettingDropdown(
-                icon: Icons.high_quality,
-                title: 'Max Quality',
-                subtitle: 'Highest video resolution to download',
-                value: settings.qualityCeiling,
-                options: const {
-                  '4k': '4K Ultra HD',
-                  '1080p': '1080p Full HD',
-                  '720p': '720p HD',
-                  'best': 'Best Available',
+              _SettingNavItem(
+                icon: Icons.info_outline,
+                title: 'About TrueStream',
+                subtitle: 'v1.0.0 · The Only',
+                colorScheme: colorScheme,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AboutScreen(),
+                    ),
+                  );
                 },
-                onChanged: (val) => ref.read(settingsProvider.notifier).setQualityCeiling(val),
-                colorScheme: colorScheme,
-              ).animate().fadeIn(delay: 300.ms, duration: 300.ms).slideX(begin: 0.1),
-              _SettingSwitch(
-                icon: Icons.music_note,
-                title: 'Audio Only',
-                subtitle: 'Extract audio without video',
-                value: settings.audioOnly,
-                onChanged: () => ref.read(settingsProvider.notifier).toggleAudioOnly(),
-                colorScheme: colorScheme,
               ).animate().fadeIn(delay: 320.ms, duration: 300.ms).slideX(begin: 0.1),
               _SettingAction(
                 icon: Icons.history,
@@ -190,49 +211,55 @@ class _SettingNavItem extends StatelessWidget {
   final String title;
   final String subtitle;
   final ColorScheme colorScheme;
+  final VoidCallback? onTap;
 
   const _SettingNavItem({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.colorScheme,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainer,
-              shape: BoxShape.circle,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: colorScheme.outline, size: 20),
             ),
-            child: Icon(icon, color: colorScheme.outline, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: textTheme.bodyLarge),
-                Text(
-                  subtitle,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.bold,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: textTheme.bodyLarge),
+                  Text(
+                    subtitle,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Icon(Icons.chevron_right, color: colorScheme.outline, size: 20),
-        ],
+            Icon(Icons.chevron_right, color: colorScheme.outline, size: 20),
+          ],
+        ),
       ),
     );
   }
@@ -347,69 +374,3 @@ class _SettingThemeSelector extends StatelessWidget {
   }
 }
 
-class _SettingDropdown extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String value;
-  final Map<String, String> options;
-  final ValueChanged<String> onChanged;
-  final ColorScheme colorScheme;
-
-  const _SettingDropdown({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.options,
-    required this.onChanged,
-    required this.colorScheme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: colorScheme.outline, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: textTheme.bodyLarge),
-                Text(
-                  subtitle,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          DropdownButton<String>(
-            value: value,
-            onChanged: (val) {
-              if (val != null) onChanged(val);
-            },
-            dropdownColor: colorScheme.surfaceContainerHigh,
-            items: options.entries
-                .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
-                .toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}

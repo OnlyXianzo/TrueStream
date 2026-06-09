@@ -1,23 +1,49 @@
 import 'dart:io' show Platform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/settings_provider.dart';
 import 'engine_service.dart';
 import 'platform_channel_engine_service.dart';
 import 'desktop_engine_service.dart';
 import 'mock_engine_service.dart';
 
 final engineProvider = Provider<EngineService>((ref) {
-  if (Platform.isAndroid) {
-    final engine = PlatformChannelEngineService();
-    _schedulePaths(engine);
-    return engine;
+  final engine = Platform.isAndroid
+      ? PlatformChannelEngineService()
+      : (Platform.isWindows || Platform.isLinux || Platform.isMacOS
+          ? DesktopEngineService()
+          : MockEngineService());
+
+  final settings = ref.read(settingsProvider);
+  final initialOutputDir = settings.downloadPath == '/Internal/Videos'
+      ? '$_appDir/TrueStream'
+      : settings.downloadPath;
+
+  if (_appDir != null) {
+    engine.setPaths({
+      'data_dir': _appDir,
+      'cache_dir': _cacheDir,
+      'output_dir': initialOutputDir,
+      'ffmpeg_path': _ffmpegPath,
+    });
   }
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    final engine = DesktopEngineService();
-    _schedulePaths(engine);
-    return engine;
+
+  ref.listen<AppSettings>(settingsProvider, (previous, next) {
+    if (previous?.downloadPath != next.downloadPath) {
+      final outputDir = next.downloadPath == '/Internal/Videos'
+          ? '$_appDir/TrueStream'
+          : next.downloadPath;
+      engine.setPaths({
+        'data_dir': _appDir,
+        'cache_dir': _cacheDir,
+        'output_dir': outputDir,
+        'ffmpeg_path': _ffmpegPath,
+      });
+    }
+  });
+
+  if (engine is MockEngineService) {
+    ref.onDispose(() => engine.dispose());
   }
-  final engine = MockEngineService();
-  ref.onDispose(() => engine.dispose());
   return engine;
 });
 
@@ -29,15 +55,4 @@ void setEngineDirs(String appDir, String cacheDir, {String? ffmpegPath}) {
   _appDir = appDir;
   _cacheDir = cacheDir;
   _ffmpegPath = ffmpegPath;
-}
-
-void _schedulePaths(EngineService engine) {
-  if (_appDir != null) {
-    engine.setPaths({
-      'data_dir': _appDir,
-      'cache_dir': _cacheDir,
-      'output_dir': '$_appDir/TrueStream',
-      'ffmpeg_path': _ffmpegPath,
-    });
-  }
 }

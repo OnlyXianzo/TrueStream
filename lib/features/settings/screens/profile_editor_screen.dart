@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/preset_provider.dart';
 
 class ProfileEditorScreen extends ConsumerStatefulWidget {
   final String? profileId;
@@ -23,9 +24,19 @@ class _ProfileEditorScreenState extends ConsumerState<ProfileEditorScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.profileId != null) {
-      _nameController.text = 'Custom HD Video';
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.profileId != null) {
+        final presets = ref.read(presetsProvider).presets;
+        final preset = presets.firstWhere((p) => p.id == widget.profileId);
+        _nameController.text = preset.name;
+        setState(() {
+          _selectedQuality = preset.qualityCeiling;
+          _selectedCodec = preset.preferredCodec;
+          _audioOnly = preset.audioOnly;
+          _selectedContainer = preset.preferredContainer;
+        });
+      }
+    });
   }
 
   @override
@@ -93,7 +104,18 @@ class _ProfileEditorScreenState extends ConsumerState<ProfileEditorScreen> {
                 subtitle: const Text('Discard video stream after download'),
                 value: _audioOnly,
                 onChanged: (val) {
-                  setState(() => _audioOnly = val);
+                  setState(() {
+                    _audioOnly = val;
+                    if (val) {
+                      if (_selectedContainer != 'mp3' && _selectedContainer != 'opus' && _selectedContainer != 'flac') {
+                        _selectedContainer = 'mp3';
+                      }
+                    } else {
+                      if (_selectedContainer == 'mp3' || _selectedContainer == 'opus' || _selectedContainer == 'flac') {
+                        _selectedContainer = 'mkv';
+                      }
+                    }
+                  });
                 },
                 activeTrackColor: colorScheme.primary,
                 contentPadding: EdgeInsets.zero,
@@ -147,11 +169,17 @@ class _ProfileEditorScreenState extends ConsumerState<ProfileEditorScreen> {
                   DropdownButton<String>(
                     value: _selectedContainer,
                     dropdownColor: colorScheme.surfaceContainerHigh,
-                    items: const [
-                      DropdownMenuItem(value: 'mkv', child: Text('MKV')),
-                      DropdownMenuItem(value: 'mp4', child: Text('MP4')),
-                      DropdownMenuItem(value: 'webm', child: Text('WebM')),
-                    ],
+                    items: _audioOnly
+                        ? const [
+                            DropdownMenuItem(value: 'mp3', child: Text('MP3')),
+                            DropdownMenuItem(value: 'opus', child: Text('Opus')),
+                            DropdownMenuItem(value: 'flac', child: Text('FLAC (Lossless)')),
+                          ]
+                        : const [
+                            DropdownMenuItem(value: 'mkv', child: Text('MKV')),
+                            DropdownMenuItem(value: 'mp4', child: Text('MP4')),
+                            DropdownMenuItem(value: 'webm', child: Text('WebM')),
+                          ],
                     onChanged: (val) {
                       if (val != null) setState(() => _selectedContainer = val);
                     },
@@ -165,6 +193,7 @@ class _ProfileEditorScreenState extends ConsumerState<ProfileEditorScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
+                          ref.read(presetsProvider.notifier).deletePreset(widget.profileId!);
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Preset deleted')),
@@ -186,12 +215,26 @@ class _ProfileEditorScreenState extends ConsumerState<ProfileEditorScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        if (_nameController.text.trim().isEmpty) {
+                        final name = _nameController.text.trim();
+                        if (name.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Please enter a preset name')),
                           );
                           return;
                         }
+
+                        final preset = DownloadPreset(
+                          id: widget.profileId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                          name: name,
+                          audioOnly: _audioOnly,
+                          qualityCeiling: _audioOnly ? 'best' : _selectedQuality,
+                          preferredCodec: _audioOnly ? 'none' : _selectedCodec,
+                          preferredContainer: _selectedContainer,
+                          isPredefined: false,
+                        );
+
+                        ref.read(presetsProvider.notifier).savePreset(preset);
+
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Preset saved successfully')),
