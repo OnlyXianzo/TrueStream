@@ -14,6 +14,13 @@ void main() async {
   final appDir = await getApplicationDocumentsDirectory();
   final cacheDir = await getTemporaryDirectory();
   setEngineDirs(appDir.path, cacheDir.path);
+
+  // Set professional industrial-grade download path if unset or using the dummy path
+  if (!prefs.containsKey('downloadPath') || prefs.getString('downloadPath') == '/Internal/Videos') {
+    final defaultPath = await getDefaultDownloadPath();
+    await prefs.setString('downloadPath', defaultPath);
+  }
+
   runApp(
     ProviderScope(
       overrides: [

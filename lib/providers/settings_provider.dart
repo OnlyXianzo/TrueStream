@@ -1,5 +1,34 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+Future<String> getDefaultDownloadPath() async {
+  if (Platform.isAndroid) {
+    final dir = Directory('/storage/emulated/0/Download/TrueStream');
+    if (!await dir.exists()) {
+      try {
+        await dir.create(recursive: true);
+      } catch (_) {
+        final appDoc = await getApplicationDocumentsDirectory();
+        return '${appDoc.path}/Downloads';
+      }
+    }
+    return dir.path;
+  } else {
+    final downloadsDir = await getDownloadsDirectory();
+    if (downloadsDir != null) {
+      final dir = Directory('${downloadsDir.path}/TrueStream');
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+      return dir.path;
+    }
+    final docDir = await getApplicationDocumentsDirectory();
+    return '${docDir.path}/Downloads';
+  }
+}
+
 
 enum AppThemeMode {
   system,

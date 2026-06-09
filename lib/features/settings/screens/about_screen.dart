@@ -54,7 +54,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Version 1.0.0 (Build 100)',
+                    'Version 0.0.1-beta (Build 1)',
                     style: textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -148,7 +148,7 @@ class AboutScreen extends StatelessWidget {
                 showLicensePage(
                   context: context,
                   applicationName: 'TrueStream',
-                  applicationVersion: '1.0.0',
+                  applicationVersion: '0.0.1-beta',
                   applicationIcon: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Icon(Icons.cloud_download, color: colorScheme.primary, size: 48),

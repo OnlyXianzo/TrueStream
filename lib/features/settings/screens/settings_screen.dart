@@ -95,7 +95,7 @@ class SettingsScreen extends ConsumerWidget {
               _SettingNavItem(
                 icon: Icons.info_outline,
                 title: 'About TrueStream',
-                subtitle: 'v1.0.0 · The Only',
+                subtitle: 'v0.0.1-beta · The Only',
                 colorScheme: colorScheme,
                 onTap: () {
                   Navigator.of(context).push(
@@ -123,7 +123,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                   child: Text(
-                    'unstable pre-release',
+                    'beta testing pre-release',
                     style: textTheme.labelSmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                       letterSpacing: 1.5,
