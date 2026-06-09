@@ -14,7 +14,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _beat = 1;
 
   void _nextBeat() {
-    if (_beat < 3) {
+    if (_beat < 4) {
       setState(() => _beat++);
     }
   }
@@ -32,8 +32,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Ambient stars/dots background for Beat 1 & 2
-          if (_beat <= 2)
+          // Ambient stars/dots background for Beat 1, 2 & 3
+          if (_beat <= 3)
             Positioned.fill(
               child: Opacity(
                 opacity: 0.1,
@@ -46,7 +46,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           // Content Layer based on active beat
           Positioned.fill(
             child: GestureDetector(
-              onTap: (_beat == 1 || _beat == 2) ? _nextBeat : null,
+              onTap: (_beat < 4) ? _nextBeat : null,
               behavior: HitTestBehavior.opaque,
               child: SafeArea(
                 child: AnimatedSwitcher(
@@ -60,7 +60,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
 
           // Skip Button
-          if (_beat < 3)
+          if (_beat < 4)
             Positioned(
               top: 16,
               right: 16,
@@ -76,8 +76,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
             ),
 
-          // Tap anywhere hint for beats 1 & 2
-          if (_beat == 1 || _beat == 2)
+          // Tap anywhere hint for beats 1, 2 & 3
+          if (_beat < 4)
             Positioned(
               bottom: 48,
               left: 0,
@@ -169,6 +169,59 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Text(
+                'Self-Contained Power',
+                style: textTheme.headlineMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ).animate().fadeIn(),
+              const SizedBox(height: 8),
+              Text(
+                'Why is the app size 100+ MB?',
+                style: textTheme.titleMedium?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ).animate(delay: 200.ms).fadeIn(),
+              const SizedBox(height: 24),
+              _buildFeatureCard(
+                title: 'Embedded Python & yt-dlp',
+                subtitle: 'Houses a sandboxed Python 3.11 environment to decrypt Google/Instagram signatures directly on-device.',
+                icon: Icons.code,
+                colorScheme: colorScheme,
+                textTheme: textTheme,
+              ).animate(delay: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutCubic, duration: 400.ms).fadeIn(),
+              const SizedBox(height: 16),
+              _buildFeatureCard(
+                title: 'Bundled Static FFmpeg',
+                subtitle: 'Embeds post-processing binaries to merge separate high-bitrate video & audio streams on-device.',
+                icon: Icons.settings_input_component,
+                colorScheme: colorScheme,
+                textTheme: textTheme,
+              ).animate(delay: 800.ms).slideY(begin: 0.2, curve: Curves.easeOutCubic, duration: 400.ms).fadeIn(),
+              const SizedBox(height: 20),
+              Text(
+                'No external apps required. Absolute maximum quality, processed locally.',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: Colors.white70,
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ).animate(delay: 1000.ms).fadeIn(),
+            ],
+          ),
+        );
+      case 4:
+        return Padding(
+          key: const ValueKey(4),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               _buildFeatureCard(
                 title: '4K AV1. No compromise.',
                 subtitle: 'Downloads the absolute highest fidelity available.',
@@ -208,7 +261,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ],
           ),
         );
-      case 4:
       default:
         return const SizedBox.shrink();
     }
