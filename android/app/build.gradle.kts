@@ -27,12 +27,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    sourceSets {
-        getByName("main") {
-            python.srcDir("../../engine")
-        }
-    }
-
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
@@ -75,6 +69,11 @@ chaquopy {
         version = "3.11"
         pip {
             install("yt-dlp>=2025.0.0")
+        }
+    }
+    sourceSets {
+        getByName("main") {
+            srcDir("../../engine")
         }
     }
 }
