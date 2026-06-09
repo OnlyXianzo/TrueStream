@@ -15,7 +15,14 @@ class TestTrueStreamError:
             "error_type": "ERROR_TEST",
             "error_message": "msg",
             "recoverable": True,
+            "suggests_vpn": False,
         }
+
+    def test_suggests_vpn(self):
+        err = TrueStreamError("ERROR_GEO_BLOCKED", "msg", True)
+        assert err.suggests_vpn is True
+        assert err.to_dict()["suggests_vpn"] is True
+
 
 
 class TestClassifyError:

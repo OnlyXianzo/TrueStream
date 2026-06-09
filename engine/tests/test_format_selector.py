@@ -45,12 +45,12 @@ class TestBuildFormatString:
     def test_explicit_video_format(self):
         cfg = {"explicit_format_id": "137"}
         result = build_format_string(cfg)
-        assert result == "137"
+        assert result == "137/best"
 
     def test_explicit_video_and_audio_format(self):
         cfg = {"explicit_format_id": "137", "explicit_audio_format_id": "140"}
         result = build_format_string(cfg)
-        assert result == "137+140"
+        assert result == "137+140/137/best"
 
     def test_explicit_overrides_audio_only(self):
         cfg = {
@@ -60,4 +60,4 @@ class TestBuildFormatString:
             "explicit_audio_format_id": "140",
         }
         result = build_format_string(cfg)
-        assert result == "137+140"
+        assert result == "137+140/137/best"
