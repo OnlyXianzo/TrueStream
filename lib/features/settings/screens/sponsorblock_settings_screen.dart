@@ -79,7 +79,7 @@ class SponsorBlockSettingsScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               Text(
                 'Categories selected: ${settings.sponsorBlockCats.length}',
-                style: textTheme.mono?.copyWith(
+                style: textTheme.mono.copyWith(
                   color: colorScheme.onSurfaceVariant,
                   fontSize: 12,
                 ),
