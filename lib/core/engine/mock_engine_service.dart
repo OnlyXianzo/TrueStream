@@ -221,6 +221,37 @@ class MockEngineService implements EngineService {
     };
   }
 
+  @override
+  Future<Map<String, dynamic>> updateCheck() async {
+    return {
+      'success': true,
+      'checked_at': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      'yt_dlp_current': '2025.06.06',
+      'yt_dlp_latest': '2025.06.06',
+      'yt_dlp_update_available': false,
+      'binaries': <Map<String, dynamic>>[
+        {
+          'name': 'ffmpeg',
+          'current_sha256': 'abc123mock',
+          'manifest_sha256': 'abc123mock',
+          'update_available': false,
+        },
+        {
+          'name': 'aria2c',
+          'current_sha256': 'def456mock',
+          'manifest_sha256': 'def456mock',
+          'update_available': false,
+        }
+      ],
+      'updates_queued': <String>[],
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> setUpdateChannel(String channel) async {
+    return {'success': true};
+  }
+
   void dispose() {
     _progressController.close();
   }

@@ -257,4 +257,16 @@ class DesktopEngineService implements EngineService {
       'cache_dir': cacheDir,
     });
   }
+
+  @override
+  Future<Map<String, dynamic>> updateCheck() async {
+    return _sendRequest('engine/update_check', {});
+  }
+
+  @override
+  Future<Map<String, dynamic>> setUpdateChannel(String channel) async {
+    return _sendRequest('engine/set_update_channel', {
+      'channel': channel,
+    });
+  }
 }

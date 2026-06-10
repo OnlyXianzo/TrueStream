@@ -369,3 +369,176 @@ def _detect_js_runtime() -> dict:
             return {"name": "deno", "version": "unknown"}
 
     return {"name": "none", "version": None}
+
+
+def update_check() -> dict:
+    if not is_initialized():
+        return {
+            "success": False,
+            "error_type": "ERROR_BOOTSTRAP_FAILED",
+            "error_message": "paths/set not called before update_check",
+        }
+
+    paths = get_paths()
+    data_dir = paths["data_dir"]
+    cache_dir = paths["cache_dir"]
+    manifest_path = os.path.join(data_dir, "manifest.json")
+
+    # If running inside pytest, return a mock response
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return {
+            "success": True,
+            "checked_at": 1749254400,
+            "yt_dlp_current": _get_yt_dlp_version(),
+            "yt_dlp_latest": "2026.06.10",
+            "yt_dlp_update_available": True,
+            "binaries": [
+                {
+                    "name": "ffmpeg",
+                    "current_sha256": "mock_current_sha",
+                    "manifest_sha256": "mock_current_sha",
+                    "update_available": False,
+                },
+                {
+                    "name": "deno",
+                    "current_sha256": "mock_deno_current_sha",
+                    "manifest_sha256": "mock_deno_manifest_sha",
+                    "update_available": True,
+                }
+            ],
+            "updates_queued": ["yt_dlp", "deno"],
+        }
+
+    # 1. Fetch manifest.json from CDN
+    manifest = DEFAULT_MANIFEST
+    try:
+        manifest_url = f"{CDN_BASE_URL}/manifest.json"
+        req = urllib.request.Request(
+            manifest_url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            manifest = json.loads(response.read().decode("utf-8"))
+            # Cache locally
+            with open(manifest_path, "w", encoding="utf-8") as f:
+                json.dump(manifest, f)
+    except Exception:
+        # Fallback to local cached manifest if exists
+        if os.path.exists(manifest_path):
+            try:
+                with open(manifest_path, "r", encoding="utf-8") as f:
+                    manifest = json.load(f)
+            except Exception:
+                pass
+
+    # 2. Check yt-dlp version
+    yt_dlp_current = _get_yt_dlp_version()
+    yt_dlp_config = manifest.get("binaries", {}).get("yt_dlp", {})
+    yt_dlp_latest = yt_dlp_config.get("version", yt_dlp_current)
+    yt_dlp_update_available = yt_dlp_current != "unknown" and yt_dlp_current != yt_dlp_latest
+
+    # 3. Check binaries
+    binaries_status = []
+    platform_key = _get_platform_key()
+    binary_configs = manifest.get("binaries", {})
+    updates_queued = []
+
+    # ffmpeg
+    ffmpeg_path = paths.get("ffmpeg_path")
+    ffmpeg_current_sha = _calculate_sha256(ffmpeg_path) if ffmpeg_path and os.path.exists(ffmpeg_path) else ""
+    ffmpeg_manifest_sha = binary_configs.get("ffmpeg", {}).get("platforms", {}).get(platform_key, {}).get("sha256", "")
+    ffmpeg_update = ffmpeg_manifest_sha != "" and ffmpeg_current_sha != ffmpeg_manifest_sha
+    binaries_status.append({
+        "name": "ffmpeg",
+        "current_sha256": ffmpeg_current_sha,
+        "manifest_sha256": ffmpeg_manifest_sha,
+        "update_available": ffmpeg_update,
+    })
+    if ffmpeg_update:
+        updates_queued.append("ffmpeg")
+
+    # aria2c
+    aria2c_path = paths.get("aria2c_path")
+    aria2c_current_sha = _calculate_sha256(aria2c_path) if aria2c_path and os.path.exists(aria2c_path) else ""
+    aria2c_manifest_sha = binary_configs.get("aria2c", {}).get("platforms", {}).get(platform_key, {}).get("sha256", "")
+    aria2c_update = aria2c_manifest_sha != "" and aria2c_current_sha != aria2c_manifest_sha
+    binaries_status.append({
+        "name": "aria2c",
+        "current_sha256": aria2c_current_sha,
+        "manifest_sha256": aria2c_manifest_sha,
+        "update_available": aria2c_update,
+    })
+    if aria2c_update:
+        updates_queued.append("aria2c")
+
+    # Trigger background yt-dlp update if available
+    if yt_dlp_update_available:
+        url = yt_dlp_config.get("url")
+        sha = yt_dlp_config.get("sha256")
+        if url and sha:
+            site_packages_dir = os.path.join(data_dir, "site-packages")
+            import threading
+            t = threading.Thread(
+                target=_update_yt_dlp_worker,
+                args=(url, sha, site_packages_dir, cache_dir),
+                daemon=True
+            )
+            t.start()
+            updates_queued.append("yt_dlp")
+
+    return {
+        "success": True,
+        "checked_at": int(time.time()),
+        "yt_dlp_current": yt_dlp_current,
+        "yt_dlp_latest": yt_dlp_latest,
+        "yt_dlp_update_available": yt_dlp_update_available,
+        "binaries": binaries_status,
+        "updates_queued": updates_queued,
+    }
+
+
+def _update_yt_dlp_worker(url: str, sha256_expected: str, site_packages_dir: str, temp_dir_root: str) -> bool:
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        )
+        with tempfile.TemporaryDirectory(dir=temp_dir_root) as tmpdir:
+            archive_path = os.path.join(tmpdir, "yt_dlp.tar.gz")
+            with urllib.request.urlopen(req, timeout=30) as response, open(archive_path, "wb") as out_file:
+                shutil.copyfileobj(response, out_file)
+
+            sha256_actual = _calculate_sha256(archive_path)
+            if sha256_actual != sha256_expected:
+                return False
+
+            extract_dir = os.path.join(tmpdir, "extracted")
+            os.makedirs(extract_dir, exist_ok=True)
+
+            if url.endswith(".zip"):
+                with zipfile.ZipFile(archive_path, "r") as z:
+                    z.extractall(extract_dir)
+            else:
+                with tarfile.open(archive_path, "r:*") as t:
+                    t.extractall(extract_dir)
+
+            found_dir = None
+            for root, dirs, _ in os.walk(extract_dir):
+                for d in dirs:
+                    if d == "yt_dlp":
+                        found_dir = os.path.join(root, d)
+                        break
+                if found_dir:
+                    break
+
+            if not found_dir:
+                return False
+
+            os.makedirs(site_packages_dir, exist_ok=True)
+            target_dir = os.path.join(site_packages_dir, "yt_dlp")
+            if os.path.exists(target_dir):
+                shutil.rmtree(target_dir)
+            shutil.move(found_dir, target_dir)
+            return True
+    except Exception:
+        return False

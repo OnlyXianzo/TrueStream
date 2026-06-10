@@ -10,6 +10,8 @@ from truestream_engine import (
     scan_resume_candidates,
     start_download,
     cancel_download,
+    set_update_channel,
+    update_check,
 )
 from truestream_engine.downloader import _active_downloads, _downloads_lock
 
@@ -122,6 +124,10 @@ def main():
                 res = get_playlist_info(params["url"], params.get("config"))
             elif method == "resume/scan":
                 res = scan_resume_candidates(params["cache_dir"])
+            elif method == "engine/update_check":
+                res = update_check()
+            elif method == "engine/set_update_channel":
+                res = set_update_channel(params["channel"])
             else:
                 res = {
                     "success": False,

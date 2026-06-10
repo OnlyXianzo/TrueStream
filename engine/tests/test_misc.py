@@ -203,3 +203,25 @@ class TestBootstrap:
             assert os.path.exists(dest_path)
             with open(dest_path, "r") as f:
                 assert f.read() == "dummy_ffmpeg_tar_content"
+
+    def test_set_update_channel(self):
+        from truestream_engine.paths import set_update_channel, get_paths
+        res = set_update_channel("nightly")
+        assert res == {"success": True}
+        assert get_paths()["update_channel"] == "nightly"
+
+    def test_update_check(self):
+        from truestream_engine.bootstrap import update_check
+        from truestream_engine.paths import set_paths
+        set_paths(
+            data_dir="/tmp/data",
+            output_dir="/tmp/output",
+            ffmpeg_path="/usr/bin/ffmpeg",
+            cache_dir="/tmp/cache",
+        )
+        res = update_check()
+        assert res["success"] is True
+        assert "yt_dlp_current" in res
+        assert "yt_dlp_latest" in res
+        assert "binaries" in res
+        assert "updates_queued" in res

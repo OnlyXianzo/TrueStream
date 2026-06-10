@@ -20,6 +20,7 @@ class MainActivity : FlutterActivity() {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var methodChannel: MethodChannel? = null
     private var sharedUrl: String? = null
+    private var py: Python? = null
 
     private fun handleSendText(intent: Intent?) {
         if (intent == null) return
@@ -48,8 +49,19 @@ class MainActivity : FlutterActivity() {
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(applicationContext))
         }
+        py = Python.getInstance()
         setupChannels(flutterEngine)
         handleSendText(intent)
+    }
+
+    private fun pyJson(obj: PyObject): String {
+        val python = py ?: return "{}"
+        return try {
+            val jsonMod = python.getModule("json")
+            jsonMod.callAttr("dumps", obj).toString()
+        } catch (_: Exception) {
+            "{}"
+        }
     }
 
     private fun setupChannels(flutterEngine: FlutterEngine) {
@@ -70,49 +82,36 @@ class MainActivity : FlutterActivity() {
                     val aria2cPath = call.argument<String>("aria2c_path")
                     val poToken = call.argument<String>("po_token")
 
-                    // Ensure binaries are executable
                     if (ffmpegPath != null) {
                         val file = File(ffmpegPath)
-                        if (file.exists()) {
-                            file.setExecutable(true, false)
-                        }
+                        if (file.exists()) file.setExecutable(true, false)
                     }
                     if (aria2cPath != null) {
                         val file = File(aria2cPath)
-                        if (file.exists()) {
-                            file.setExecutable(true, false)
-                        }
+                        if (file.exists()) file.setExecutable(true, false)
                     }
 
                     scope.launch(Dispatchers.IO) {
                         try {
-                            val py = Python.getInstance()
-                            val engine = py.getModule("truestream_engine")
+                            val python = py ?: return@launch
+                            val engine = python.getModule("truestream_engine")
                             engine.callAttr("set_paths", dataDir, outputDir, ffmpegPath, cacheDir, cookiesPath, aria2cPath, poToken)
-                            withContext(Dispatchers.Main) {
-                                result.success(mapOf("success" to true))
-                            }
+                            withContext(Dispatchers.Main) { result.success(mapOf("success" to true)) }
                         } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                result.error("ERROR_INVALID_PATH", e.message, null)
-                            }
+                            withContext(Dispatchers.Main) { result.error("ERROR_INVALID_PATH", e.message, null) }
                         }
                     }
                 }
                 "engine/bootstrap" -> {
                     scope.launch(Dispatchers.IO) {
                         try {
-                            val py = Python.getInstance()
-                            val engine = py.getModule("truestream_engine")
+                            val python = py ?: return@launch
+                            val engine = python.getModule("truestream_engine")
                             val bootstrapResult = engine.callAttr("bootstrap")
-                            val resultMap = pyTojava(bootstrapResult)
-                            withContext(Dispatchers.Main) {
-                                result.success(resultMap)
-                            }
-                        } catch (e: java.lang.Exception) {
-                            withContext(Dispatchers.Main) {
-                                result.error("ERROR_BOOTSTRAP_FAILED", e.message, e.message ?: e.toString())
-                            }
+                            val jsonStr = pyJson(bootstrapResult)
+                            withContext(Dispatchers.Main) { result.success(jsonStr) }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) { result.error("ERROR_BOOTSTRAP_FAILED", e.message, null) }
                         }
                     }
                 }
@@ -124,21 +123,14 @@ class MainActivity : FlutterActivity() {
 
                     scope.launch(Dispatchers.IO) {
                         try {
-                            val py = Python.getInstance()
-                            val engine = py.getModule("truestream_engine")
-                            
+                            val python = py ?: return@launch
+                            val engine = python.getModule("truestream_engine")
                             val startResult = engine.callAttr("start_download", url, downloadId, config, networkType)
-                            val resultMap = pyTojava(startResult)
-                            
+                            val jsonStr = pyJson(startResult)
                             startProgressPolling(downloadId!!)
-                            
-                            withContext(Dispatchers.Main) {
-                                result.success(resultMap)
-                            }
+                            withContext(Dispatchers.Main) { result.success(jsonStr) }
                         } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                result.error("ERROR_START_FAILED", e.message, null)
-                            }
+                            withContext(Dispatchers.Main) { result.error("ERROR_START_FAILED", e.message, null) }
                         }
                     }
                 }
@@ -146,17 +138,13 @@ class MainActivity : FlutterActivity() {
                     val downloadId = call.argument<String>("download_id")
                     scope.launch(Dispatchers.IO) {
                         try {
-                            val py = Python.getInstance()
-                            val engine = py.getModule("truestream_engine")
+                            val python = py ?: return@launch
+                            val engine = python.getModule("truestream_engine")
                             val cancelResult = engine.callAttr("cancel_download", downloadId)
-                            val resultMap = pyTojava(cancelResult)
-                            withContext(Dispatchers.Main) {
-                                result.success(resultMap)
-                            }
+                            val jsonStr = pyJson(cancelResult)
+                            withContext(Dispatchers.Main) { result.success(jsonStr) }
                         } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                result.error("ERROR_CANCEL_FAILED", e.message, null)
-                            }
+                            withContext(Dispatchers.Main) { result.error("ERROR_CANCEL_FAILED", e.message, null) }
                         }
                     }
                 }
@@ -165,17 +153,13 @@ class MainActivity : FlutterActivity() {
                     val config = call.argument<Map<String, Any>>("config")
                     scope.launch(Dispatchers.IO) {
                         try {
-                            val py = Python.getInstance()
-                            val engine = py.getModule("truestream_engine")
+                            val python = py ?: return@launch
+                            val engine = python.getModule("truestream_engine")
                             val formatsResult = engine.callAttr("get_formats", url, config)
-                            val resultMap = pyTojava(formatsResult)
-                            withContext(Dispatchers.Main) {
-                                result.success(resultMap)
-                            }
+                            val jsonStr = pyJson(formatsResult)
+                            withContext(Dispatchers.Main) { result.success(jsonStr) }
                         } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                result.error("ERROR_FORMATS_FAILED", e.message, null)
-                            }
+                            withContext(Dispatchers.Main) { result.error("ERROR_FORMATS_FAILED", e.message, null) }
                         }
                     }
                 }
@@ -184,17 +168,13 @@ class MainActivity : FlutterActivity() {
                     val config = call.argument<Map<String, Any>>("config")
                     scope.launch(Dispatchers.IO) {
                         try {
-                            val py = Python.getInstance()
-                            val engine = py.getModule("truestream_engine")
+                            val python = py ?: return@launch
+                            val engine = python.getModule("truestream_engine")
                             val playlistResult = engine.callAttr("get_playlist_info", url, config)
-                            val resultMap = pyTojava(playlistResult)
-                            withContext(Dispatchers.Main) {
-                                result.success(resultMap)
-                            }
+                            val jsonStr = pyJson(playlistResult)
+                            withContext(Dispatchers.Main) { result.success(jsonStr) }
                         } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                result.error("ERROR_PLAYLIST_FAILED", e.message, null)
-                            }
+                            withContext(Dispatchers.Main) { result.error("ERROR_PLAYLIST_FAILED", e.message, null) }
                         }
                     }
                 }
@@ -202,17 +182,40 @@ class MainActivity : FlutterActivity() {
                     val cacheDir = call.argument<String>("cache_dir")
                     scope.launch(Dispatchers.IO) {
                         try {
-                            val py = Python.getInstance()
-                            val engine = py.getModule("truestream_engine")
+                            val python = py ?: return@launch
+                            val engine = python.getModule("truestream_engine")
                             val resumeResult = engine.callAttr("scan_resume_candidates", cacheDir)
-                            val resultMap = pyTojava(resumeResult)
-                            withContext(Dispatchers.Main) {
-                                result.success(resultMap)
-                            }
+                            val jsonStr = pyJson(resumeResult)
+                            withContext(Dispatchers.Main) { result.success(jsonStr) }
                         } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                result.error("ERROR_RESUME_FAILED", e.message, null)
-                            }
+                            withContext(Dispatchers.Main) { result.error("ERROR_RESUME_FAILED", e.message, null) }
+                        }
+                    }
+                }
+                "engine/update_check" -> {
+                    scope.launch(Dispatchers.IO) {
+                        try {
+                            val python = py ?: return@launch
+                            val engine = python.getModule("truestream_engine")
+                            val updateResult = engine.callAttr("update_check")
+                            val jsonStr = pyJson(updateResult)
+                            withContext(Dispatchers.Main) { result.success(jsonStr) }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) { result.error("ERROR_UPDATE_FAILED", e.message, null) }
+                        }
+                    }
+                }
+                "engine/set_update_channel" -> {
+                    val channel = call.argument<String>("channel")
+                    scope.launch(Dispatchers.IO) {
+                        try {
+                            val python = py ?: return@launch
+                            val engine = python.getModule("truestream_engine")
+                            val channelResult = engine.callAttr("set_update_channel", channel)
+                            val jsonStr = pyJson(channelResult)
+                            withContext(Dispatchers.Main) { result.success(jsonStr) }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) { result.error("ERROR_CHANNEL_FAILED", e.message, null) }
                         }
                     }
                 }
@@ -225,7 +228,6 @@ class MainActivity : FlutterActivity() {
                 override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
                     eventSink = events
                 }
-
                 override fun onCancel(arguments: Any?) {
                     eventSink = null
                 }
@@ -233,140 +235,50 @@ class MainActivity : FlutterActivity() {
         )
     }
 
-    private fun pyTojava(obj: Any?): Any? {
-        if (obj == null) return null
-        if (obj is PyObject) {
-            val typeName = try {
-                obj.type().getAttr("__name__").toString()
-            } catch (e: Exception) {
-                ""
-            }
-            when (typeName) {
-                "dict" -> {
-                    val map = obj.asMap()
-                    val result = mutableMapOf<String, Any?>()
-                    for (entry in map.entries) {
-                        result[entry.key.toString()] = pyTojava(entry.value)
-                    }
-                    return result
-                }
-                "list", "tuple" -> {
-                    val list = obj.asList()
-                    val result = mutableListOf<Any?>()
-                    for (item in list) {
-                        result.add(pyTojava(item))
-                    }
-                    return result
-                }
-                "str" -> return obj.toJava(String::class.java)
-                "int" -> return obj.toJava(Long::class.java)
-                "float" -> return obj.toJava(Double::class.java)
-                "bool" -> return obj.toJava(Boolean::class.java)
-                "NoneType" -> return null
-                else -> {
-                    return try {
-                        val map = obj.asMap()
-                        val result = mutableMapOf<String, Any?>()
-                        for (entry in map.entries) {
-                            result[entry.key.toString()] = pyTojava(entry.value)
-                        }
-                        result
-                    } catch (e: Exception) {
-                        try {
-                            val list = obj.asList()
-                            val result = mutableListOf<Any?>()
-                            for (item in list) {
-                                result.add(pyTojava(item))
-                            }
-                            result
-                        } catch (e2: Exception) {
-                            try {
-                                obj.toJava(Any::class.java)
-                            } catch (e3: Exception) {
-                                obj.toString()
-                            }
-                        }
-                    }
-                }
-            }
-        } else if (obj is Map<*, *>) {
-            val result = mutableMapOf<String, Any?>()
-            for (entry in obj.entries) {
-                result[entry.key.toString()] = pyTojava(entry.value)
-            }
-            return result
-        } else if (obj is List<*>) {
-            val result = mutableListOf<Any?>()
-            for (item in obj) {
-                result.add(pyTojava(item))
-            }
-            return result
-        } else if (obj is Array<*>) {
-            val result = mutableListOf<Any?>()
-            for (item in obj) {
-                result.add(pyTojava(item))
-            }
-            return result
-        }
-        return obj
-    }
-
     @Suppress("UNCHECKED_CAST")
     private fun startProgressPolling(downloadId: String) {
         scope.launch(Dispatchers.IO) {
-            val py = Python.getInstance()
-            val downloader = py.getModule("truestream_engine.downloader")
-            val rawDownloadsMap = downloader.get("_active_downloads")?.asMap()
-            val downloads = rawDownloadsMap as? Map<Any?, Any?>
-            val downloadInfo = downloads?.get(downloadId)?.let {
-                (it as? PyObject)?.asMap()
-            }
-            val progressQueue = (downloadInfo as? Map<Any?, Any?>)?.get("progress_queue") as? PyObject
-            val resultQueue = (downloadInfo as? Map<Any?, Any?>)?.get("result_queue") as? PyObject
+            try {
+                val python = py ?: return@launch
+                val downloader = python.getModule("truestream_engine.downloader")
+                val rawDownloadsMap = downloader.get("_active_downloads")?.asMap() as? Map<Any?, Any?>
+                val downloadInfo = rawDownloadsMap?.get(downloadId) as? Map<Any?, Any?>
+                val progressQueue = downloadInfo?.get("progress_queue") as? PyObject
+                val resultQueue = downloadInfo?.get("result_queue") as? PyObject
 
-            if (progressQueue == null || resultQueue == null) return@launch
+                if (progressQueue == null || resultQueue == null) return@launch
 
-            var isDone = false
-            while (!isDone && coroutineContext.isActive) {
-                val isEmpty = progressQueue.callAttr("empty").toJava(Boolean::class.java) as Boolean
-                if (!isEmpty) {
-                    try {
-                        val item = progressQueue.callAttr("get_nowait")
-                        val jsonStr = item.toString()
-                        withContext(Dispatchers.Main) {
-                            eventSink?.success(jsonStr)
-                        }
-                    } catch (e: Exception) {
-                        // ignore queue empty
+                var isDone = false
+                while (!isDone && coroutineContext.isActive) {
+                    if (!(progressQueue.callAttr("empty").toJava(Boolean::class.java) as Boolean)) {
+                        try {
+                            val item = progressQueue.callAttr("get_nowait")
+                            withContext(Dispatchers.Main) { eventSink?.success(item.toString()) }
+                        } catch (_: Exception) { }
                     }
-                }
 
-                val isResultEmpty = resultQueue.callAttr("empty").toJava(Boolean::class.java) as Boolean
-                if (!isResultEmpty) {
-                    try {
-                        val resultVal = resultQueue.callAttr("get_nowait")
-                        val resultObj = pyTojava(resultVal) as? Map<*, *> ?: mapOf<Any?, Any?>()
-                        val isSuccess = resultObj["success"] as? Boolean ?: false
-                        val eventJson = if (isSuccess) {
-                            "{\"type\": \"event\", \"event\": \"finished\", \"download_id\": \"$downloadId\"}"
-                        } else {
-                            val errType = resultObj["error_type"] ?: "ERROR_UNKNOWN"
-                            val errMsg = resultObj["error_message"] ?: "Unknown error"
-                            "{\"type\": \"event\", \"event\": \"error\", \"download_id\": \"$downloadId\", \"error_type\": \"$errType\", \"error_message\": \"$errMsg\", \"recoverable\": true}"
-                        }
-                        withContext(Dispatchers.Main) {
-                            eventSink?.success(eventJson)
-                        }
-                        isDone = true
-                    } catch (e: Exception) {
-                        // ignore
+                    if (!(resultQueue.callAttr("empty").toJava(Boolean::class.java) as Boolean)) {
+                        try {
+                            val resultVal = resultQueue.callAttr("get_nowait")
+                            val resultMap = resultVal.asMap()
+                            val isSuccess = try {
+                                (resultMap["success"] as? PyObject)?.toJava(Boolean::class.java) as? Boolean ?: false
+                            } catch (_: Exception) { false }
+                            val eventJson = if (isSuccess) {
+                                "{\"type\":\"event\",\"event\":\"finished\",\"download_id\":\"$downloadId\"}"
+                            } else {
+                                val errType = try { (resultMap["error_type"] as? PyObject)?.toString() ?: "ERROR_UNKNOWN" } catch (_: Exception) { "ERROR_UNKNOWN" }
+                                val errMsg = try { (resultMap["error_message"] as? PyObject)?.toString() ?: "Unknown error" } catch (_: Exception) { "Unknown error" }
+                                "{\"type\":\"event\",\"event\":\"error\",\"download_id\":\"$downloadId\",\"error_type\":\"$errType\",\"error_message\":\"$errMsg\",\"recoverable\":true}"
+                            }
+                            withContext(Dispatchers.Main) { eventSink?.success(eventJson) }
+                            isDone = true
+                        } catch (_: Exception) { }
                     }
-                }
 
-                if (!isDone) {
-                    delay(100)
+                    if (!isDone) delay(100)
                 }
-            }
+            } catch (_: Exception) { }
         }
     }
 

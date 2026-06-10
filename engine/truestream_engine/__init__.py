@@ -1,4 +1,4 @@
-from truestream_engine.paths import set_paths, get_paths
+from truestream_engine.paths import set_paths, get_paths, set_update_channel
 from truestream_engine.config import DEFAULT_CFG
 from truestream_engine.opts_builder import build_ydl_opts
 from truestream_engine.format_selector import build_format_string
@@ -10,11 +10,12 @@ from truestream_engine.formats import get_formats
 from truestream_engine.playlist import get_playlist_info
 from truestream_engine.po_token import generate_po_token
 from truestream_engine.resume import scan_resume_candidates
-from truestream_engine.bootstrap import bootstrap
+from truestream_engine.bootstrap import bootstrap, update_check
 
 __all__ = [
     "set_paths",
     "get_paths",
+    "set_update_channel",
     "DEFAULT_CFG",
     "build_ydl_opts",
     "build_format_string",
@@ -30,4 +31,5 @@ __all__ = [
     "generate_po_token",
     "scan_resume_candidates",
     "bootstrap",
+    "update_check",
 ]

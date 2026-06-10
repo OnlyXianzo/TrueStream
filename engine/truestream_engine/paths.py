@@ -6,6 +6,7 @@ _paths = {
     "cookies_path": None,
     "aria2c_path": None,
     "po_token": None,
+    "update_channel": "stable",
 }
 
 
@@ -19,6 +20,7 @@ def set_paths(
     po_token: str | None = None,
 ) -> dict:
     import os
+    import sys
     _paths["data_dir"] = data_dir
     _paths["output_dir"] = output_dir
     _paths["cache_dir"] = cache_dir
@@ -49,6 +51,16 @@ def set_paths(
             existing_path = pd + os.pathsep + existing_path
     os.environ["PATH"] = existing_path
 
+    # Prepends site-packages to sys.path to load dynamically updated yt-dlp modules
+    site_packages = os.path.join(data_dir, "site-packages")
+    if os.path.isdir(site_packages) and site_packages not in sys.path:
+        sys.path.insert(0, site_packages)
+
+    return {"success": True}
+
+
+def set_update_channel(channel: str) -> dict:
+    _paths["update_channel"] = channel
     return {"success": True}
 
 

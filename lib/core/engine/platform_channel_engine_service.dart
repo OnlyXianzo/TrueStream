@@ -27,8 +27,9 @@ class PlatformChannelEngineService implements EngineService {
 
   @override
   Future<Map<String, dynamic>> bootstrap() async {
-    final result = await _channel.invokeMethod<Map>('engine/bootstrap');
-    return Map<String, dynamic>.from(result ?? {});
+    final result = await _channel.invokeMethod<String>('engine/bootstrap');
+    if (result == null) return {};
+    return Map<String, dynamic>.from(jsonDecode(result) as Map);
   }
 
   @override
@@ -43,21 +44,23 @@ class PlatformChannelEngineService implements EngineService {
     required Map<String, dynamic> config,
     required String networkType,
   }) async {
-    final result = await _channel.invokeMethod<Map>('download/start', {
+    final result = await _channel.invokeMethod<String>('download/start', {
       'url': url,
       'download_id': downloadId,
       'config': config,
       'network_type': networkType,
     });
-    return Map<String, dynamic>.from(result ?? {});
+    if (result == null) return {};
+    return Map<String, dynamic>.from(jsonDecode(result) as Map);
   }
 
   @override
   Future<Map<String, dynamic>> cancelDownload(String downloadId) async {
-    final result = await _channel.invokeMethod<Map>('download/cancel', {
+    final result = await _channel.invokeMethod<String>('download/cancel', {
       'download_id': downloadId,
     });
-    return Map<String, dynamic>.from(result ?? {});
+    if (result == null) return {};
+    return Map<String, dynamic>.from(jsonDecode(result) as Map);
   }
 
   @override
@@ -74,11 +77,12 @@ class PlatformChannelEngineService implements EngineService {
     required String url,
     required Map<String, dynamic> config,
   }) async {
-    final result = await _channel.invokeMethod<Map>('formats/get', {
+    final result = await _channel.invokeMethod<String>('formats/get', {
       'url': url,
       'config': config,
     });
-    return Map<String, dynamic>.from(result ?? {});
+    if (result == null) return {};
+    return Map<String, dynamic>.from(jsonDecode(result) as Map);
   }
 
   @override
@@ -86,11 +90,12 @@ class PlatformChannelEngineService implements EngineService {
     required String url,
     required Map<String, dynamic> config,
   }) async {
-    final result = await _channel.invokeMethod<Map>('playlist/info', {
+    final result = await _channel.invokeMethod<String>('playlist/info', {
       'url': url,
       'config': config,
     });
-    return Map<String, dynamic>.from(result ?? {});
+    if (result == null) return {};
+    return Map<String, dynamic>.from(jsonDecode(result) as Map);
   }
 
   @override
@@ -105,9 +110,35 @@ class PlatformChannelEngineService implements EngineService {
 
   @override
   Future<Map<String, dynamic>> scanResumeCandidates({required String cacheDir}) async {
-    final result = await _channel.invokeMethod<Map>('resume/scan', {
+    final result = await _channel.invokeMethod<String>('resume/scan', {
       'cache_dir': cacheDir,
     });
-    return Map<String, dynamic>.from(result ?? {});
+    if (result == null) return {};
+    return Map<String, dynamic>.from(jsonDecode(result) as Map);
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateCheck() async {
+    try {
+      final result = await _channel.invokeMethod<String>('engine/update_check');
+      if (result == null) return {};
+      return Map<String, dynamic>.from(jsonDecode(result) as Map);
+    } catch (_) {
+      return {'success': false, 'error_type': 'ERROR_UNKNOWN', 'error_message': 'Not available on this platform'};
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> setUpdateChannel(String channel) async {
+    try {
+      final result = await _channel.invokeMethod<String>('engine/set_update_channel', {
+        'channel': channel,
+      });
+      if (result == null) return {};
+      return Map<String, dynamic>.from(jsonDecode(result) as Map);
+    } catch (_) {
+      return {'success': false, 'error_type': 'ERROR_UNKNOWN', 'error_message': 'Not available on this platform'};
+    }
   }
 }
+
