@@ -75,7 +75,7 @@ class MainActivity : FlutterActivity() {
                             val py = Python.getInstance()
                             val engine = py.getModule("truestream_engine")
                             val bootstrapResult = engine.callAttr("bootstrap")
-                            val resultMap = bootstrapResult.toJavaMap()
+                            val resultMap = pyTojava(bootstrapResult)
                             withContext(Dispatchers.Main) {
                                 result.success(resultMap)
                             }
@@ -98,7 +98,7 @@ class MainActivity : FlutterActivity() {
                             val engine = py.getModule("truestream_engine")
                             
                             val startResult = engine.callAttr("start_download", url, downloadId, config, networkType)
-                            val resultMap = startResult.toJavaMap()
+                            val resultMap = pyTojava(startResult)
                             
                             startProgressPolling(downloadId!!)
                             
@@ -119,7 +119,7 @@ class MainActivity : FlutterActivity() {
                             val py = Python.getInstance()
                             val engine = py.getModule("truestream_engine")
                             val cancelResult = engine.callAttr("cancel_download", downloadId)
-                            val resultMap = cancelResult.toJavaMap()
+                            val resultMap = pyTojava(cancelResult)
                             withContext(Dispatchers.Main) {
                                 result.success(resultMap)
                             }
@@ -138,7 +138,7 @@ class MainActivity : FlutterActivity() {
                             val py = Python.getInstance()
                             val engine = py.getModule("truestream_engine")
                             val formatsResult = engine.callAttr("get_formats", url, config)
-                            val resultMap = formatsResult.toJavaMap()
+                            val resultMap = pyTojava(formatsResult)
                             withContext(Dispatchers.Main) {
                                 result.success(resultMap)
                             }
@@ -157,7 +157,7 @@ class MainActivity : FlutterActivity() {
                             val py = Python.getInstance()
                             val engine = py.getModule("truestream_engine")
                             val playlistResult = engine.callAttr("get_playlist_info", url, config)
-                            val resultMap = playlistResult.toJavaMap()
+                            val resultMap = pyTojava(playlistResult)
                             withContext(Dispatchers.Main) {
                                 result.success(resultMap)
                             }
@@ -175,7 +175,7 @@ class MainActivity : FlutterActivity() {
                             val py = Python.getInstance()
                             val engine = py.getModule("truestream_engine")
                             val resumeResult = engine.callAttr("scan_resume_candidates", cacheDir)
-                            val resultMap = resumeResult.toJavaMap()
+                            val resultMap = pyTojava(resumeResult)
                             withContext(Dispatchers.Main) {
                                 result.success(resultMap)
                             }
@@ -203,14 +203,52 @@ class MainActivity : FlutterActivity() {
         )
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun PyObject.toJavaMap(): Map<String, Any?> {
-        val rawMap = asMap() as Map<Any?, PyObject>
-        val result = mutableMapOf<String, Any?>()
-        for ((key, value) in rawMap) {
-            result[key.toString()] = value.toJava(Any::class.java)
+    private fun pyTojava(obj: Any?): Any? {
+        if (obj == null) return null
+        if (obj is PyObject) {
+            try {
+                val map = obj.asMap()
+                val result = mutableMapOf<String, Any?>()
+                for (entry in map.entries) {
+                    result[entry.key.toString()] = pyTojava(entry.value)
+                }
+                return result
+            } catch (e: Exception) {}
+
+            try {
+                val list = obj.asList()
+                val result = mutableListOf<Any?>()
+                for (item in list) {
+                    result.add(pyTojava(item))
+                }
+                return result
+            } catch (e: Exception) {}
+
+            return try {
+                pyTojava(obj.toJava(Any::class.java))
+            } catch (e: Exception) {
+                obj.toString()
+            }
+        } else if (obj is Map<*, *>) {
+            val result = mutableMapOf<String, Any?>()
+            for (entry in obj.entries) {
+                result[entry.key.toString()] = pyTojava(entry.value)
+            }
+            return result
+        } else if (obj is List<*>) {
+            val result = mutableListOf<Any?>()
+            for (item in obj) {
+                result.add(pyTojava(item))
+            }
+            return result
+        } else if (obj is Array<*>) {
+            val result = mutableListOf<Any?>()
+            for (item in obj) {
+                result.add(pyTojava(item))
+            }
+            return result
         }
-        return result
+        return obj
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -247,7 +285,7 @@ class MainActivity : FlutterActivity() {
                 if (!isResultEmpty) {
                     try {
                         val resultVal = resultQueue.callAttr("get_nowait")
-                        val resultObj = resultVal.toJavaMap()
+                        val resultObj = pyTojava(resultVal) as? Map<*, *> ?: mapOf<Any?, Any?>()
                         val isSuccess = resultObj["success"] as? Boolean ?: false
                         val eventJson = if (isSuccess) {
                             "{\"type\": \"event\", \"event\": \"finished\", \"download_id\": \"$downloadId\"}"
