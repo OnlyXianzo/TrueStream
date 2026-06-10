@@ -51,8 +51,28 @@ class DesktopEngineService implements EngineService {
 
     _reconnectAttempts++;
 
-    // Resolve python executable path dynamically on Unix platforms
+    // Resolve python executable path dynamically, checking local virtual environments first in development
     String executable = _pythonPath;
+    if (executable == 'python' || executable == 'python3') {
+      final venvCandidates = Platform.isWindows
+          ? [
+              '${Directory.current.path}/engine/.venv/Scripts/python.exe',
+              '${Directory.current.path}/.venv/Scripts/python.exe',
+            ]
+          : [
+              '${Directory.current.path}/engine/.venv/bin/python',
+              '${Directory.current.path}/.venv/bin/python',
+            ];
+
+      for (final path in venvCandidates) {
+        if (File(path).existsSync()) {
+          executable = path;
+          break;
+        }
+      }
+    }
+
+    // Fall back to system python3 on Unix platforms if system python is requested and no local venv was resolved
     if (executable == 'python' && (Platform.isLinux || Platform.isMacOS)) {
       try {
         final result = await Process.run('which', ['python3']);
