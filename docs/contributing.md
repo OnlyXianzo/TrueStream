@@ -6,50 +6,121 @@ Thanks for contributing to TrueStream. Here's how the process works.
 
 1. Fork the repository.
 2. Create a feature branch from `main`.
-3. Make your changes following the code style guidelines below.
-4. Verify your changes compile and tests pass.
+3. Make your changes following the code style and guidelines below.
+4. Verify your changes pass all checks.
 5. Submit a pull request targeting `main`.
 
 ## Code Style
 
 ### Flutter / Dart
 
-- Follow the official Dart style guide and the settings in `analysis_options.yaml`.
-- Use Riverpod for shared state. Avoid `setState()` for state shared across
-  widgets.
-- Body text uses Instrument Sans (via `GoogleFonts.instrumentSans`). Mono text
-  (speeds, URLs, format codes) uses the `mono` extension on `TextTheme`.
-- All colors must reference theme tokens from `DESIGN.md`. Never hardcode hex
-  values.
+- Follow [Effective Dart](https://dart.dev/effective-dart) guidelines and the settings in `analysis_options.yaml`.
+- Use **Riverpod** for shared state. Never use `setState()` for state shared across widgets. Use `ConsumerWidget` / `ConsumerStatefulWidget` with providers.
+- Body text uses Instrument Sans via `GoogleFonts.instrumentSans()`. Mono text (speeds, URLs, format codes) uses `Theme.of(context).textTheme.mono` (the `TrueStreamTextStyles` extension on `TextTheme` that provides IosevkaCharonMono).
+- All colors must reference DESIGN.md tokens via `TrueStreamColors`. Never hardcode hex values.
 - Use `const` constructors where possible. Avoid mutable state in widgets.
+- Aim for 48x48 minimum touch targets for interactive elements.
+- Add semantic labels (`Semantics` widget) for screen reader support.
+- Use `flutter analyze` before committing — must pass with zero errors.
 
 ### Python
 
-- Follow PEP 8 formatting standards.
-- Use the `YoutubeDL` class API from yt-dlp. Never call `subprocess.run()` with
-  the yt-dlp binary.
+- Follow **PEP 8** formatting standards.
+- Use the `YoutubeDL` class API from yt-dlp. Never call `subprocess.run()` with the yt-dlp binary.
 - All blocking operations must run in `threading.Thread` with a cancel event.
-- Use structured JSON for Flutter communication. No `print()` statements
-  for machine-readable output.
+- Use structured JSON for Flutter communication. No `print()` statements for machine-readable output.
+- Keep functions focused on a single responsibility. Each module in `engine/truestream_engine/` owns one concern.
+- Use `set_paths()` to inject all binary paths. Never hardcode paths.
+- Run `pytest engine/tests/ -v` before committing — all tests must pass.
 
-## Commit Messages
+## Commit Conventions
 
 Use conventional commit format:
 
 ```
-type: brief description in present tense
+type: scope: description in present tense
 ```
 
-Types: `init`, `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `test`,
-`perf`.
+Types: `init` (scaffold), `feat` (new feature/screen), `fix`, `chore` (config/deps), `docs`, `style` (formatting, no logic change), `refactor`, `test`, `perf`.
 
-Keep commits focused on a single logical change. If a fix is small, commit it
-right away instead of bundling it with unrelated work.
+Scope is optional but recommended (e.g., task ID like `P4-003`).
+
+**One logical change per commit.** Never bundle unrelated changes in a single commit. Each commit diff should be reviewable in under 2 minutes.
+
+## Branch Strategy
+
+- **main** — stable, always deployable.
+- **feature branches** — branch from `main`, name by task (e.g. `feat/sponsorblock-settings`, `fix/cancel-race`).
+- Squash merge into `main` when the PR is approved.
+
+## Testing
+
+Always run these before committing:
+
+```bash
+# Flutter static analysis
+flutter analyze
+
+# Flutter widget & unit tests
+flutter test
+
+# Python engine tests
+pytest engine/tests/ -v
+```
+
+The CI pipeline in `.github/workflows/verify.yml` enforces all three on every push and PR.
+
+### Testing conventions
+
+- **Flutter tests**: Write widget tests for screens via `WidgetTester`. Mock providers using `ProviderScope` overrides. Place tests in `test/`.
+- **Python tests**: Write pytest functions for each module in `engine/tests/test_<module>.py`. Use plain `assert` statements. One test class per module.
 
 ## Pull Request Process
 
 1. Ensure your branch is up to date with `main`.
-2. Run the full test suite before opening your PR.
-3. Write a clear PR description explaining what your change does and why.
-4. A maintainer will review your changes. Address any feedback before merging.
-5. Squash commits if requested by the reviewer.
+2. Run the full test suite (`flutter analyze`, `flutter test`, `pytest engine/tests/ -v`).
+3. Fill out the pull request template — include motivation, description, and verification steps.
+4. Mark which platforms you tested on (Android / Windows / Linux).
+5. A maintainer reviews your changes. Address feedback before merging.
+6. Squash commits if requested by the reviewer.
+
+## Architecture Rules
+
+- **yt-dlp**: `YoutubeDL` class API only. Never `subprocess.run()` with yt-dlp binary.
+- **Downloads**: Always in `threading.Thread` with a cancel event. Never block the main thread.
+- **State**: Riverpod `ConsumerWidget`/`Notifier`/`AsyncNotifier`. Never `setState()` for shared state.
+- **Fonts**: Body = `GoogleFonts.instrumentSans()`. Mono = `Theme.of(context).textTheme.mono` (IosevkaCharonMono). Never system fonts.
+- **Colors**: Always from DESIGN.md tokens via `TrueStreamColors`. Never hex literals.
+- **Config**: Never hardcode paths. All binary paths injected via `set_paths()`.
+- **Format options**: Never use both `merge_output_format` and `remux_video` simultaneously in yt-dlp options.
+- **Layout structure**: Screens go in `lib/features/<feature>/screens/`. Providers go in `lib/providers/`. Theme and engine bridge go in `lib/core/`.
+
+## How to Add a New Screen
+
+1. **Create the screen file:** `lib/features/<feature>/screens/<name>_screen.dart`.
+   - Extend `ConsumerWidget` or `ConsumerStatefulWidget` (if you need local state like text controllers).
+   - Use `SuperRef` pattern — accept `super.key` and pass to super.
+2. **Add a provider (if needed):** `lib/providers/<name>_provider.dart`.
+   - Extend `StateNotifier<State>` or `AsyncNotifier<State>` for shared state.
+   - Expose the provider as a global `final`.
+3. **Wire navigation:**
+   - Use `Navigator.of(context).push(MaterialPageRoute(...))` for simple navigation.
+   - For bottom-nav screens, add the route in `lib/features/shell/screens/app_shell.dart`.
+4. **Update the app entry point (rare):**
+   - If the screen is a top-level route (onboarding, standalone), add it in `lib/main.dart`.
+5. **Add semantic labels** for accessibility.
+6. **Write a widget test** in `test/` covering the screen's basic rendering and interactions.
+
+## How to Add a New Python Module
+
+1. **Create the module:** `engine/truestream_engine/<module>.py`.
+   - Import from sibling modules where needed (e.g. `from truestream_engine.paths import ...`).
+   - Keep one responsibility per module.
+2. **Add tests:** `engine/tests/test_<module>.py`.
+   - Write pytest functions with plain `assert` statements.
+   - Cover normal cases, edge cases, and error paths.
+3. **Wire into the IPC dispatch** in `engine/truestream_engine/__main__.py`:
+   - Add an `elif method == "<namespace>/<action>"` branch that calls your function.
+   - Return a JSON-serializable dict (include `"success": True/False` for error reporting).
+4. **Update the public API** in `engine/truestream_engine/__init__.py` if the function should be accessible from the package level.
+5. **Run tests:** `pytest engine/tests/ -v` and verify all pass.
