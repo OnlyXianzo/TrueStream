@@ -1,5 +1,6 @@
 package com.theonly.truestream
 
+import android.content.Intent
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -17,20 +18,49 @@ class MainActivity : FlutterActivity() {
 
     private var eventSink: EventChannel.EventSink? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var methodChannel: MethodChannel? = null
+    private var sharedUrl: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        if (!Python.isStarted()) {
-            Python.start(AndroidPlatform(this))
-        }
-        flutterEngine?.let {
-            setupChannels(it)
+    private fun handleSendText(intent: Intent?) {
+        if (intent == null) return
+        if (intent.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+            intent.getStringExtra(Intent.EXTRA_TEXT)?.let { sharedText ->
+                val urlRegex = "(https?://[\\w\\d:#@%/;$~()'*&+-=\\?\\.\\!\\[\\]]+)".toRegex()
+                val match = urlRegex.find(sharedText)
+                if (match != null) {
+                    sharedUrl = match.value
+                    scope.launch(Dispatchers.Main) {
+                        methodChannel?.invokeMethod("intent/shared_url", mapOf("url" to sharedUrl))
+                    }
+                }
+            }
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleSendText(intent)
+    }
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(applicationContext))
+        }
+        setupChannels(flutterEngine)
+        handleSendText(intent)
+    }
+
     private fun setupChannels(flutterEngine: FlutterEngine) {
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ENGINE_CHANNEL).setMethodCallHandler { call, result ->
+        val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ENGINE_CHANNEL)
+        methodChannel = channel
+        channel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "intent/get_shared" -> {
+                    result.success(mapOf("url" to sharedUrl))
+                    sharedUrl = null
+                }
                 "paths/set" -> {
                     val dataDir = call.argument<String>("data_dir")
                     val outputDir = call.argument<String>("output_dir")
@@ -206,28 +236,58 @@ class MainActivity : FlutterActivity() {
     private fun pyTojava(obj: Any?): Any? {
         if (obj == null) return null
         if (obj is PyObject) {
-            try {
-                val map = obj.asMap()
-                val result = mutableMapOf<String, Any?>()
-                for (entry in map.entries) {
-                    result[entry.key.toString()] = pyTojava(entry.value)
-                }
-                return result
-            } catch (e: Exception) {}
-
-            try {
-                val list = obj.asList()
-                val result = mutableListOf<Any?>()
-                for (item in list) {
-                    result.add(pyTojava(item))
-                }
-                return result
-            } catch (e: Exception) {}
-
-            return try {
-                pyTojava(obj.toJava(Any::class.java))
+            val typeName = try {
+                obj.type().getAttr("__name__").toString()
             } catch (e: Exception) {
-                obj.toString()
+                ""
+            }
+            when (typeName) {
+                "dict" -> {
+                    val map = obj.asMap()
+                    val result = mutableMapOf<String, Any?>()
+                    for (entry in map.entries) {
+                        result[entry.key.toString()] = pyTojava(entry.value)
+                    }
+                    return result
+                }
+                "list", "tuple" -> {
+                    val list = obj.asList()
+                    val result = mutableListOf<Any?>()
+                    for (item in list) {
+                        result.add(pyTojava(item))
+                    }
+                    return result
+                }
+                "str" -> return obj.toJava(String::class.java)
+                "int" -> return obj.toJava(Long::class.java)
+                "float" -> return obj.toJava(Double::class.java)
+                "bool" -> return obj.toJava(Boolean::class.java)
+                "NoneType" -> return null
+                else -> {
+                    return try {
+                        val map = obj.asMap()
+                        val result = mutableMapOf<String, Any?>()
+                        for (entry in map.entries) {
+                            result[entry.key.toString()] = pyTojava(entry.value)
+                        }
+                        result
+                    } catch (e: Exception) {
+                        try {
+                            val list = obj.asList()
+                            val result = mutableListOf<Any?>()
+                            for (item in list) {
+                                result.add(pyTojava(item))
+                            }
+                            result
+                        } catch (e2: Exception) {
+                            try {
+                                obj.toJava(Any::class.java)
+                            } catch (e3: Exception) {
+                                obj.toString()
+                            }
+                        }
+                    }
+                }
             }
         } else if (obj is Map<*, *>) {
             val result = mutableMapOf<String, Any?>()

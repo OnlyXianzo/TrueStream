@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/engine/engine_provider.dart';
 
 class DownloadItem {
   final String id;
@@ -146,5 +147,15 @@ class DownloadNotifier extends StateNotifier<List<DownloadItem>> {
 
 final downloadProvider =
     StateNotifierProvider<DownloadNotifier, List<DownloadItem>>((ref) {
-  return DownloadNotifier();
+  final notifier = DownloadNotifier();
+  final engine = ref.watch(engineProvider);
+  final subscription = engine.progressStream.listen((event) {
+    notifier.handleProgressEvent(event);
+  });
+  ref.onDispose(() {
+    subscription.cancel();
+  });
+  return notifier;
 });
+
+final sharedUrlProvider = StateProvider<String?>((ref) => null);

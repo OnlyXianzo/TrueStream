@@ -2,34 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../../core/engine/engine_provider.dart';
 import '../../../providers/download_provider.dart';
 import '../../../providers/engine_status_provider.dart';
 import '../screens/format_picker_screen.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _listenToProgress();
-  }
-
-  void _listenToProgress() {
-    final engine = ref.read(engineProvider);
-    engine.progressStream.listen((event) {
-      ref.read(downloadProvider.notifier).handleProgressEvent(event);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final downloads = ref.watch(downloadProvider);
     final recentDownloads = downloads.take(3).toList();
     final colorScheme = Theme.of(context).colorScheme;
@@ -168,15 +149,15 @@ class _HeroSection extends StatelessWidget {
   }
 }
 
-class _UrlInput extends StatefulWidget {
+class _UrlInput extends ConsumerStatefulWidget {
   final ColorScheme colorScheme;
   const _UrlInput({required this.colorScheme});
 
   @override
-  State<_UrlInput> createState() => _UrlInputState();
+  ConsumerState<_UrlInput> createState() => _UrlInputState();
 }
 
-class _UrlInputState extends State<_UrlInput> {
+class _UrlInputState extends ConsumerState<_UrlInput> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
 
@@ -203,6 +184,13 @@ class _UrlInputState extends State<_UrlInput> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<String?>(sharedUrlProvider, (previous, next) {
+      if (next != null && next.isNotEmpty) {
+        _controller.text = next;
+        _focusNode.requestFocus();
+        ref.read(sharedUrlProvider.notifier).state = null;
+      }
+    });
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
