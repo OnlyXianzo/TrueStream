@@ -174,6 +174,7 @@ class AppSettings {
       aria2cMaxSpeed: aria2cMaxSpeed == _sentinel ? this.aria2cMaxSpeed : (aria2cMaxSpeed as String?),
       observedSources: observedSources ?? this.observedSources,
       useGridView: useGridView ?? this.useGridView,
+      sponsorBlockCats: sponsorBlockCats ?? this.sponsorBlockCats,
     );
   }
 }
@@ -216,6 +217,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final aria2cEnabled = _prefs.getBool('aria2cEnabled') ?? false;
     final aria2cChunks = _prefs.getInt('aria2cChunks') ?? 5;
     final aria2cMaxSpeed = _prefs.getString('aria2cMaxSpeed');
+    final useGridView = _prefs.getBool('useGridView') ?? false;
+    final customTemplatesJson = _prefs.getString('customTemplates');
+    final customTemplates = customTemplatesJson != null
+        ? List<String>.from(jsonDecode(customTemplatesJson) as List)
+        : <String>[];
     final observedSourcesJson = _prefs.getString('observedSources');
     final observedSources = observedSourcesJson != null
         ? List<Map<String, dynamic>>.from(
@@ -261,6 +267,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       scheduleTime: scheduleTime,
       scheduleDays: scheduleDays,
       sponsorBlockCats: sponsorBlockCats,
+      useGridView: useGridView,
     );
   }
 
@@ -395,25 +402,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final newValue = !state.embedSubtitles;
     _prefs.setBool('embedSubtitles', newValue);
     state = state.copyWith(embedSubtitles: newValue);
-  }
-
-  void setAria2cEnabled(bool value) {
-    _prefs.setBool('aria2cEnabled', value);
-    state = state.copyWith(aria2cEnabled: value);
-  }
-
-  void setAria2cChunks(int value) {
-    _prefs.setInt('aria2cChunks', value);
-    state = state.copyWith(aria2cChunks: value);
-  }
-
-  void setAria2cMaxSpeed(String? value) {
-    if (value == null || value.isEmpty) {
-      _prefs.remove('aria2cMaxSpeed');
-    } else {
-      _prefs.setString('aria2cMaxSpeed', value);
-    }
-    state = state.copyWith(aria2cMaxSpeed: value);
   }
 
   void setUseGridView(bool value) {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../providers/download_provider.dart';
 import '../../../providers/playlist_provider.dart';
+import '../../../providers/settings_provider.dart';
 import 'playlist_details_screen.dart';
 
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -75,6 +76,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   Widget build(BuildContext context) {
     final downloads = ref.watch(downloadProvider);
     final playlists = ref.watch(playlistProvider);
+    final settings = ref.watch(settingsProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -104,6 +106,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => ref.read(settingsProvider.notifier).setUseGridView(!settings.useGridView),
+                    icon: Icon(settings.useGridView ? Icons.view_list : Icons.grid_view),
+                    tooltip: settings.useGridView ? 'List view' : 'Grid view',
+                  ),
                 ],
               ),
             ),
@@ -127,7 +135,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildLibraryContent(downloads, colorScheme, textTheme),
+                  _buildLibraryContent(downloads, colorScheme, textTheme, settings.useGridView),
                   _buildPlaylistsTab(playlists, colorScheme, textTheme),
                 ],
               ),

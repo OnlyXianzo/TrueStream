@@ -84,8 +84,8 @@ class CommandTemplatesScreen extends ConsumerWidget {
         ? _decodeTemplate(templates[index])
         : null;
 
-    final nameController = TextEditingController(text: existing?.$1 ?? '');
-    final argsController = TextEditingController(text: existing?.$2 ?? '');
+    final nameController = TextEditingController(text: existing?.name ?? '');
+    final argsController = TextEditingController(text: existing?.args ?? '');
 
     showDialog(
       context: context,
@@ -106,7 +106,7 @@ class CommandTemplatesScreen extends ConsumerWidget {
             TextField(
               controller: argsController,
               decoration: const InputDecoration(
-                labelText: Command-line arguments',
+                labelText: 'Command-line arguments',
                 hintText: 'e.g. --write-sub --sub-lang en',
               ),
               maxLines: 3,
@@ -271,7 +271,7 @@ class _TemplateCard extends StatelessWidget {
       final map = jsonDecode(json) as Map<String, dynamic>;
       return (name: map['name'] as String? ?? '', args: map['args'] as String? ?? '');
     } catch (_) {
-      return (name: 'Invalid', json: json);
+      return (name: 'Invalid', args: json);
     }
   }
 }
