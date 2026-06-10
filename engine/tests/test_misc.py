@@ -1,4 +1,5 @@
 import os
+import json
 import tempfile
 from truestream_engine.resume import scan_resume_candidates
 from truestream_engine.site_profiles import (
@@ -48,6 +49,17 @@ class TestScanResumeCandidates:
             result = scan_resume_candidates(tmpdir)
             assert len(result["candidates"]) == 1
             assert result["candidates"][0]["expired"] is True
+
+    def test_recovers_likely_url_from_info_json(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            part_path = os.path.join(tmpdir, "video.mp4.part")
+            info_path = os.path.join(tmpdir, "video.mp4.info.json")
+            open(part_path, "w").close()
+            with open(info_path, "w", encoding="utf-8") as f:
+                json.dump({"webpage_url": "https://youtube.com/watch?v=dQw4w9WgXcQ"}, f)
+            result = scan_resume_candidates(tmpdir)
+            assert len(result["candidates"]) == 1
+            assert result["candidates"][0]["likely_url"] == "https://youtube.com/watch?v=dQw4w9WgXcQ"
 
 
 class TestSiteProfiles:

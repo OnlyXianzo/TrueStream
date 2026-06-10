@@ -213,6 +213,14 @@ class MockEngineService implements EngineService {
   @override
   Stream<String> get sharedUrlStream => const Stream.empty();
 
+  @override
+  Future<Map<String, dynamic>> scanResumeCandidates({required String cacheDir}) async {
+    return {
+      'success': true,
+      'candidates': <Map<String, dynamic>>[],
+    };
+  }
+
   void dispose() {
     _progressController.close();
   }

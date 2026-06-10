@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../providers/download_provider.dart';
 import '../../../providers/engine_status_provider.dart';
+import '../../../providers/resume_provider.dart';
 import '../screens/format_picker_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -38,6 +39,7 @@ class HomeScreen extends ConsumerWidget {
                   .animate()
                   .fadeIn(delay: 200.ms, duration: 400.ms)
                   .slideY(begin: 0.15, curve: Curves.easeOutCubic),
+              const _ResumeScanSection(),
               const SizedBox(height: 40),
               // Your Library header
               if (recentDownloads.isNotEmpty) ...[
@@ -517,6 +519,189 @@ class _EngineStatusBanner extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ResumeScanSection extends ConsumerWidget {
+  const _ResumeScanSection();
+
+  String _formatAge(int seconds) {
+    if (seconds < 60) return '${seconds}s ago';
+    final minutes = seconds ~/ 60;
+    if (minutes < 60) return '${minutes}m ago';
+    final hours = minutes ~/ 60;
+    if (hours < 24) return '${hours}h ago';
+    final days = hours ~/ 24;
+    return '${days}d ago';
+  }
+
+  String _formatSize(int bytes) {
+    final double mb = bytes / (1024 * 1024);
+    if (mb > 1024) {
+      return '${(mb / 1024).toStringAsFixed(1)} GB';
+    }
+    return '${mb.toStringAsFixed(1)} MB';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resumeState = ref.watch(resumeProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return resumeState.when(
+      data: (candidates) {
+        if (candidates.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 24),
+            Text(
+              'INTERRUPTED DOWNLOADS',
+              style: textTheme.labelSmall?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...candidates.map((candidate) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: candidate.expired ? colorScheme.error : colorScheme.secondary,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                candidate.filename,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${_formatSize(candidate.sizeBytes)} · ${_formatAge(candidate.ageSeconds)}',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (candidate.expired) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: colorScheme.errorContainer.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: colorScheme.error.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.timer_off_outlined, color: colorScheme.error, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Stream URLs may have expired.',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.onErrorContainer,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            ref.read(resumeProvider.notifier).dismiss(candidate);
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: colorScheme.outline,
+                          ),
+                          child: const Text('Dismiss'),
+                        ),
+                        const SizedBox(width: 8),
+                        if (candidate.likelyUrl != null && !candidate.expired) ...[
+                          ElevatedButton(
+                            onPressed: () {
+                              ref.read(sharedUrlProvider.notifier).state = candidate.likelyUrl;
+                              ref.read(resumeProvider.notifier).removeCandidateFromList(candidate);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colorScheme.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('Resume'),
+                          ),
+                        ] else ...[
+                          OutlinedButton(
+                            onPressed: () {
+                              if (candidate.likelyUrl != null) {
+                                ref.read(resumeProvider.notifier).deleteFileOnly(candidate);
+                                ref.read(sharedUrlProvider.notifier).state = candidate.likelyUrl;
+                              } else {
+                                ref.read(resumeProvider.notifier).deleteFileOnly(candidate);
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: colorScheme.primary,
+                              side: BorderSide(color: colorScheme.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 }

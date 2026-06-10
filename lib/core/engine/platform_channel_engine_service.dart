@@ -102,4 +102,12 @@ class PlatformChannelEngineService implements EngineService {
       return null;
     }
   }
+
+  @override
+  Future<Map<String, dynamic>> scanResumeCandidates({required String cacheDir}) async {
+    final result = await _channel.invokeMethod<Map>('resume/scan', {
+      'cache_dir': cacheDir,
+    });
+    return Map<String, dynamic>.from(result ?? {});
+  }
 }

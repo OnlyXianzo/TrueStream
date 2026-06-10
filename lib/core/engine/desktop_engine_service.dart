@@ -250,4 +250,11 @@ class DesktopEngineService implements EngineService {
 
   @override
   Stream<String> get sharedUrlStream => const Stream.empty();
+
+  @override
+  Future<Map<String, dynamic>> scanResumeCandidates({required String cacheDir}) async {
+    return _sendRequest('resume/scan', {
+      'cache_dir': cacheDir,
+    });
+  }
 }

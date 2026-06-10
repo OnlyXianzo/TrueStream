@@ -19,4 +19,5 @@ abstract class EngineService {
   });
   Future<String?> getSharedUrl();
   Stream<String> get sharedUrlStream;
+  Future<Map<String, dynamic>> scanResumeCandidates({required String cacheDir});
 }
