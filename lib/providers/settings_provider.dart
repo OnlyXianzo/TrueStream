@@ -61,8 +61,16 @@ class AppSettings {
   final List<String> subtitleLanguages;
   final bool downloadAutoSubtitles;
   final bool embedSubtitles;
+  final bool aria2cEnabled;
+  final int aria2cChunks;
+  final String? aria2cMaxSpeed;
+  final bool useGridView;
   final List<String> customTemplates;
   final List<Map<String, dynamic>> observedSources;
+  final bool scheduleEnabled;
+  final String scheduleTime;
+  final List<int> scheduleDays;
+  final List<String> sponsorBlockCats;
 
   const AppSettings({
     this.wifiOnly = false,
@@ -88,8 +96,16 @@ class AppSettings {
     this.subtitleLanguages = const ['en'],
     this.downloadAutoSubtitles = false,
     this.embedSubtitles = false,
+    this.aria2cEnabled = false,
+    this.aria2cChunks = 5,
+    this.aria2cMaxSpeed,
+    this.useGridView = false,
     this.customTemplates = const [],
     this.observedSources = const [],
+    this.scheduleEnabled = false,
+    this.scheduleTime = '22:00',
+    this.scheduleDays = const [1, 2, 3, 4, 5],
+    this.sponsorBlockCats = const ['sponsor'],
   });
 
   static const Object _sentinel = Object();
@@ -118,7 +134,16 @@ class AppSettings {
     List<String>? subtitleLanguages,
     bool? downloadAutoSubtitles,
     bool? embedSubtitles,
+    bool? aria2cEnabled,
+    int? aria2cChunks,
+    Object? aria2cMaxSpeed = _sentinel,
+    bool? useGridView,
+    List<String>? customTemplates,
     List<Map<String, dynamic>>? observedSources,
+    bool? scheduleEnabled,
+    String? scheduleTime,
+    List<int>? scheduleDays,
+    List<String>? sponsorBlockCats,
   }) {
     return AppSettings(
       wifiOnly: wifiOnly ?? this.wifiOnly,
@@ -144,10 +169,13 @@ class AppSettings {
       subtitleLanguages: subtitleLanguages ?? this.subtitleLanguages,
       downloadAutoSubtitles: downloadAutoSubtitles ?? this.downloadAutoSubtitles,
       embedSubtitles: embedSubtitles ?? this.embedSubtitles,
+      aria2cEnabled: aria2cEnabled ?? this.aria2cEnabled,
+      aria2cChunks: aria2cChunks ?? this.aria2cChunks,
+      aria2cMaxSpeed: aria2cMaxSpeed == _sentinel ? this.aria2cMaxSpeed : (aria2cMaxSpeed as String?),
       observedSources: observedSources ?? this.observedSources,
+      useGridView: useGridView ?? this.useGridView,
     );
   }
-}
 }
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -185,12 +213,20 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final subtitleLanguages = _prefs.getStringList('subtitleLanguages') ?? ['en'];
     final downloadAutoSubtitles = _prefs.getBool('downloadAutoSubtitles') ?? false;
     final embedSubtitles = _prefs.getBool('embedSubtitles') ?? false;
+    final aria2cEnabled = _prefs.getBool('aria2cEnabled') ?? false;
+    final aria2cChunks = _prefs.getInt('aria2cChunks') ?? 5;
+    final aria2cMaxSpeed = _prefs.getString('aria2cMaxSpeed');
     final observedSourcesJson = _prefs.getString('observedSources');
     final observedSources = observedSourcesJson != null
         ? List<Map<String, dynamic>>.from(
             (jsonDecode(observedSourcesJson) as List).map((e) => Map<String, dynamic>.from(e as Map)),
           )
         : <Map<String, dynamic>>[];
+    final scheduleEnabled = _prefs.getBool('scheduleEnabled') ?? false;
+    final scheduleTime = _prefs.getString('scheduleTime') ?? '22:00';
+    final scheduleDaysRaw = _prefs.getStringList('scheduleDays') ?? ['1', '2', '3', '4', '5'];
+    final scheduleDays = scheduleDaysRaw.map((e) => int.tryParse(e) ?? 1).toList();
+    final sponsorBlockCats = _prefs.getStringList('sponsorBlockCats') ?? ['sponsor'];
 
     state = AppSettings(
       wifiOnly: wifiOnly,
@@ -216,7 +252,15 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       subtitleLanguages: subtitleLanguages,
       downloadAutoSubtitles: downloadAutoSubtitles,
       embedSubtitles: embedSubtitles,
+      aria2cEnabled: aria2cEnabled,
+      aria2cChunks: aria2cChunks,
+      aria2cMaxSpeed: aria2cMaxSpeed,
+      customTemplates: customTemplates,
       observedSources: observedSources,
+      scheduleEnabled: scheduleEnabled,
+      scheduleTime: scheduleTime,
+      scheduleDays: scheduleDays,
+      sponsorBlockCats: sponsorBlockCats,
     );
   }
 
@@ -353,6 +397,49 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = state.copyWith(embedSubtitles: newValue);
   }
 
+  void setAria2cEnabled(bool value) {
+    _prefs.setBool('aria2cEnabled', value);
+    state = state.copyWith(aria2cEnabled: value);
+  }
+
+  void setAria2cChunks(int value) {
+    _prefs.setInt('aria2cChunks', value);
+    state = state.copyWith(aria2cChunks: value);
+  }
+
+  void setAria2cMaxSpeed(String? value) {
+    if (value == null || value.isEmpty) {
+      _prefs.remove('aria2cMaxSpeed');
+    } else {
+      _prefs.setString('aria2cMaxSpeed', value);
+    }
+    state = state.copyWith(aria2cMaxSpeed: value);
+  }
+
+  void setUseGridView(bool value) {
+    _prefs.setBool('useGridView', value);
+    state = state.copyWith(useGridView: value);
+  }
+
+  void setAria2cEnabled(bool value) {
+    _prefs.setBool('aria2cEnabled', value);
+    state = state.copyWith(aria2cEnabled: value);
+  }
+
+  void setAria2cChunks(int value) {
+    _prefs.setInt('aria2cChunks', value);
+    state = state.copyWith(aria2cChunks: value);
+  }
+
+  void setAria2cMaxSpeed(String? value) {
+    if (value == null || value.isEmpty) {
+      _prefs.remove('aria2cMaxSpeed');
+    } else {
+      _prefs.setString('aria2cMaxSpeed', value);
+    }
+    state = state.copyWith(aria2cMaxSpeed: value);
+  }
+
   void setScheduleEnabled(bool value) {
     _prefs.setBool('scheduleEnabled', value);
     state = state.copyWith(scheduleEnabled: value);
@@ -371,6 +458,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void setSponsorBlockCats(List<String> cats) {
     _prefs.setStringList('sponsorBlockCats', cats);
     state = state.copyWith(sponsorBlockCats: cats);
+  }
+
+  void setCustomTemplates(List<String> templates) {
+    _prefs.setString('customTemplates', jsonEncode(templates));
+    state = state.copyWith(customTemplates: templates);
   }
 
   void addObservedSource(Map<String, dynamic> source) {
