@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../features/home/screens/media_preview_screen.dart';
 import '../../../providers/download_provider.dart';
 import '../../../providers/playlist_provider.dart';
 import '../../../providers/settings_provider.dart';
@@ -150,11 +151,41 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     List<DownloadItem> downloads,
     ColorScheme colorScheme,
     TextTheme textTheme,
+    bool useGridView,
   ) {
     final pending = downloads.where((d) => d.status == 'downloading').toList();
     final completed = downloads.where((d) => d.status == 'completed').toList();
 
+    if (downloads.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 60),
+          child: Text(
+            'No downloads yet',
+            style: textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: useGridView
+          ? _buildGridView(completed, pending, colorScheme, textTheme)
+          : _buildListView(completed, pending, colorScheme, textTheme),
+    );
+  }
+
+  Widget _buildListView(
+    List<DownloadItem> completed,
+    List<DownloadItem> pending,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
     return ListView(
+      key: const ValueKey('list'),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: [
         if (pending.isNotEmpty) ...[
@@ -190,19 +221,36 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 isDownloading: false,
               )),
         ],
-        if (downloads.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 60),
-              child: Text(
-                'No downloads yet',
-                style: textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
       ],
+    );
+  }
+
+  Widget _buildGridView(
+    List<DownloadItem> completed,
+    List<DownloadItem> pending,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
+    final all = [...pending, ...completed];
+    return GridView.builder(
+      key: const ValueKey('grid'),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.7,
+      ),
+      itemCount: all.length,
+      itemBuilder: (context, index) {
+        final item = all[index];
+        return _LibraryGridCard(
+          item: item,
+          colorScheme: colorScheme,
+          textTheme: textTheme,
+          isDownloading: item.status == 'downloading',
+        );
+      },
     );
   }
 
@@ -295,6 +343,124 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   }
 }
 
+class _LibraryGridCard extends StatelessWidget {
+  final DownloadItem item;
+  final ColorScheme colorScheme;
+  final TextTheme textTheme;
+  final bool isDownloading;
+
+  const _LibraryGridCard({
+    required this.item,
+    required this.colorScheme,
+    required this.textTheme,
+    required this.isDownloading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '${item.title}, ${isDownloading ? 'downloading' : 'completed'}',
+      child: Card(
+        elevation: 0,
+        color: colorScheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.primary.withValues(alpha: 0.3),
+                      colorScheme.tertiary.withValues(alpha: 0.3),
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: isDownloading
+                      ? SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                value: item.progress,
+                                strokeWidth: 3,
+                                color: colorScheme.primary,
+                                backgroundColor: colorScheme.surfaceContainerHighest,
+                              ),
+                              Text(
+                                '${(item.progress * 100).toInt()}%',
+                                style: textTheme.mono.copyWith(
+                                  color: colorScheme.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Icon(
+                          Icons.movie_outlined,
+                          size: 40,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                        ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          item.fileSize ?? 'N/A',
+                          style: textTheme.mono.copyWith(
+                            fontSize: 10,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _LibraryItem extends StatelessWidget {
   final DownloadItem item;
   final ColorScheme colorScheme;
@@ -373,6 +539,30 @@ class _LibraryItem extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (!isDownloading)
+                        Semantics(
+                          label: 'Preview',
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.play_circle_outline,
+                              size: 20,
+                              color: colorScheme.primary,
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => MediaPreviewScreen(
+                                    filePath: item.filePath,
+                                    title: item.title,
+                                    thumbnailUrl: item.thumbnailUrl,
+                                  ),
+                                ),
+                              );
+                            },
+                            visualDensity: VisualDensity.compact,
+                            tooltip: 'Preview',
+                          ),
+                        ),
                       Semantics(
                         label: 'More options',
                         child: Icon(
