@@ -61,12 +61,15 @@ class HomeScreen extends ConsumerWidget {
                         colorScheme: colorScheme,
                       ),
                     )),
-              ] else ...[
+              ]               else ...[
                 const SizedBox(height: 60),
-                Icon(
-                  Icons.cloud_download_outlined,
-                  size: 48,
-                  color: colorScheme.outline.withValues(alpha: 0.4),
+                Semantics(
+                  label: 'No downloads',
+                  child: Icon(
+                    Icons.cloud_download_outlined,
+                    size: 48,
+                    color: colorScheme.outline.withValues(alpha: 0.4),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -113,10 +116,13 @@ class _HeroSection extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Icon(
-                Icons.cloud_download_outlined,
-                size: 64,
-                color: colorScheme.outline,
+              Semantics(
+                label: 'TrueStream download icon',
+                child: Icon(
+                  Icons.cloud_download_outlined,
+                  size: 64,
+                  color: colorScheme.outline,
+                ),
               ),
               Positioned(
                 bottom: 8,
@@ -127,10 +133,13 @@ class _HeroSection extends StatelessWidget {
                     color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
-                    Icons.search,
-                    size: 18,
-                    color: colorScheme.onPrimaryContainer,
+                  child: Semantics(
+                    label: 'Search sources',
+                    child: Icon(
+                      Icons.search,
+                      size: 18,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
                   ),
                 ),
               ),
@@ -222,22 +231,26 @@ class _UrlInputState extends ConsumerState<_UrlInput> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Material(
-              color: widget.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(8),
-              child: InkWell(
+          Semantics(
+            button: true,
+            label: 'Submit URL',
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Material(
+                color: widget.colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(8),
-                onTap: _submitUrl,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.link,
-                    color: widget.colorScheme.onPrimaryContainer,
-                    size: 20,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: _submitUrl,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.link,
+                      color: widget.colorScheme.onPrimaryContainer,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
@@ -290,76 +303,88 @@ class _DownloadCard extends StatelessWidget {
     final isError = item.status == 'error';
     final textTheme = Theme.of(context).textTheme;
 
-    return GestureDetector(
-      onTap: isError && item.suggestsVpn
-          ? () => _showVpnDialog(context)
-          : null,
-      child: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isError
-                ? colorScheme.error.withValues(alpha: 0.4)
-                : colorScheme.outlineVariant.withValues(alpha: 0.2),
+    return Semantics(
+      button: isError && item.suggestsVpn,
+      label: isError && item.suggestsVpn ? '${item.title} - VPN suggested. Tap for details.' : item.title,
+      child: GestureDetector(
+        onTap: isError && item.suggestsVpn
+            ? () => _showVpnDialog(context)
+            : null,
+        child: Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isError
+                  ? colorScheme.error.withValues(alpha: 0.4)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.2),
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: isDownloading
+                      ? Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Semantics(
+                              label: 'Downloading',
+                              child: Icon(
+                                Icons.downloading,
+                                color: colorScheme.primary,
+                                size: 32,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Semantics(
+                          label: isError ? 'Error' : 'Completed',
+                          child: Icon(
+                              isError ? Icons.error_outline : Icons.image_outlined,
+                              color: isError
+                                  ? colorScheme.error
+                                  : colorScheme.outline.withValues(alpha: 0.5),
+                              size: 32,
+                            ),
+                        ),
                 ),
-                child: isDownloading
-                    ? Stack(
-                        alignment: Alignment.center,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.downloading,
-                            color: colorScheme.primary,
-                            size: 32,
+                          Expanded(
+                            child: Text(
+                              item.title,
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Semantics(
+                            label: 'More options',
+                            child: Icon(
+                              Icons.more_vert,
+                              size: 18,
+                              color: colorScheme.outline.withValues(alpha: 0.6),
+                            ),
                           ),
                         ],
-                      )
-                    : Icon(
-                        isError ? Icons.error_outline : Icons.image_outlined,
-                        color: isError
-                            ? colorScheme.error
-                            : colorScheme.outline.withValues(alpha: 0.5),
-                        size: 32,
                       ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.title,
-                            style: textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Icon(
-                          Icons.more_vert,
-                          size: 18,
-                          color: colorScheme.outline.withValues(alpha: 0.6),
-                        ),
-                      ],
-                    ),
                     if (isDownloading) ...[
                       const SizedBox(height: 4),
                       Text(
@@ -442,10 +467,13 @@ class _DownloadCard extends StatelessWidget {
                               ),
                             ),
                           const Spacer(),
-                          Icon(
-                            Icons.check_circle,
-                            color: colorScheme.primary,
-                            size: 20,
+                          Semantics(
+                            label: 'Download complete',
+                            child: Icon(
+                              Icons.check_circle,
+                              color: colorScheme.primary,
+                              size: 20,
+                            ),
                           ),
                         ],
                       ),
@@ -457,7 +485,8 @@ class _DownloadCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   String _formatBytes(int bytes) {
@@ -495,27 +524,33 @@ class _EngineStatusBanner extends ConsumerWidget {
                 : colorScheme.tertiaryContainer,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Row(
-            children: [
-              Icon(
-                hasError ? Icons.warning_amber : Icons.system_update,
-                size: 16,
-                color: hasError
-                    ? colorScheme.onErrorContainer
-                    : colorScheme.onTertiaryContainer,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  message,
-                  style: textTheme.labelSmall?.copyWith(
+          child: Semantics(
+            label: hasError ? 'Engine error: $message' : 'Engine status: $message',
+            child: Row(
+              children: [
+                Semantics(
+                  label: hasError ? 'Warning' : 'Update',
+                  child: Icon(
+                    hasError ? Icons.warning_amber : Icons.system_update,
+                    size: 16,
                     color: hasError
                         ? colorScheme.onErrorContainer
                         : colorScheme.onTertiaryContainer,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: hasError
+                          ? colorScheme.onErrorContainer
+                          : colorScheme.onTertiaryContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -584,10 +619,13 @@ class _ResumeScanSection extends ConsumerWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.warning_amber_rounded,
-                          color: candidate.expired ? colorScheme.error : colorScheme.secondary,
-                          size: 24,
+                        Semantics(
+                          label: candidate.expired ? 'Expired' : 'Interrupted',
+                          child: Icon(
+                            Icons.warning_amber_rounded,
+                            color: candidate.expired ? colorScheme.error : colorScheme.secondary,
+                            size: 24,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -627,7 +665,10 @@ class _ResumeScanSection extends ConsumerWidget {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.timer_off_outlined, color: colorScheme.error, size: 16),
+                            Semantics(
+                              label: 'Expired',
+                              child: Icon(Icons.timer_off_outlined, color: colorScheme.error, size: 16),
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(

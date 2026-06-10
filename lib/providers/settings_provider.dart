@@ -54,6 +54,12 @@ class AppSettings {
   final bool twitterLoggedIn;
   final bool bilibiliLoggedIn;
   final bool twitchLoggedIn;
+  final bool splitChapters;
+  final String updateChannel;
+  final bool downloadSubtitles;
+  final List<String> subtitleLanguages;
+  final bool downloadAutoSubtitles;
+  final bool embedSubtitles;
 
   const AppSettings({
     this.wifiOnly = false,
@@ -73,6 +79,12 @@ class AppSettings {
     this.twitterLoggedIn = false,
     this.bilibiliLoggedIn = false,
     this.twitchLoggedIn = false,
+    this.splitChapters = false,
+    this.updateChannel = 'stable',
+    this.downloadSubtitles = false,
+    this.subtitleLanguages = const ['en'],
+    this.downloadAutoSubtitles = false,
+    this.embedSubtitles = false,
   });
 
   static const Object _sentinel = Object();
@@ -95,6 +107,12 @@ class AppSettings {
     bool? twitterLoggedIn,
     bool? bilibiliLoggedIn,
     bool? twitchLoggedIn,
+    bool? splitChapters,
+    String? updateChannel,
+    bool? downloadSubtitles,
+    List<String>? subtitleLanguages,
+    bool? downloadAutoSubtitles,
+    bool? embedSubtitles,
   }) {
     return AppSettings(
       wifiOnly: wifiOnly ?? this.wifiOnly,
@@ -114,6 +132,12 @@ class AppSettings {
       twitterLoggedIn: twitterLoggedIn ?? this.twitterLoggedIn,
       bilibiliLoggedIn: bilibiliLoggedIn ?? this.bilibiliLoggedIn,
       twitchLoggedIn: twitchLoggedIn ?? this.twitchLoggedIn,
+      splitChapters: splitChapters ?? this.splitChapters,
+      updateChannel: updateChannel ?? this.updateChannel,
+      downloadSubtitles: downloadSubtitles ?? this.downloadSubtitles,
+      subtitleLanguages: subtitleLanguages ?? this.subtitleLanguages,
+      downloadAutoSubtitles: downloadAutoSubtitles ?? this.downloadAutoSubtitles,
+      embedSubtitles: embedSubtitles ?? this.embedSubtitles,
     );
   }
 }
@@ -147,7 +171,13 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final twitterLoggedIn = _prefs.getBool('twitterLoggedIn') ?? false;
     final bilibiliLoggedIn = _prefs.getBool('bilibiliLoggedIn') ?? false;
     final twitchLoggedIn = _prefs.getBool('twitchLoggedIn') ?? false;
-    
+    final splitChapters = _prefs.getBool('splitChapters') ?? false;
+    final updateChannel = _prefs.getString('updateChannel') ?? 'stable';
+    final downloadSubtitles = _prefs.getBool('downloadSubtitles') ?? false;
+    final subtitleLanguages = _prefs.getStringList('subtitleLanguages') ?? ['en'];
+    final downloadAutoSubtitles = _prefs.getBool('downloadAutoSubtitles') ?? false;
+    final embedSubtitles = _prefs.getBool('embedSubtitles') ?? false;
+
     state = AppSettings(
       wifiOnly: wifiOnly,
       turboMode: turboMode,
@@ -166,6 +196,12 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       twitterLoggedIn: twitterLoggedIn,
       bilibiliLoggedIn: bilibiliLoggedIn,
       twitchLoggedIn: twitchLoggedIn,
+      splitChapters: splitChapters,
+      updateChannel: updateChannel,
+      downloadSubtitles: downloadSubtitles,
+      subtitleLanguages: subtitleLanguages,
+      downloadAutoSubtitles: downloadAutoSubtitles,
+      embedSubtitles: embedSubtitles,
     );
   }
 
@@ -266,6 +302,40 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void setTwitchLoggedIn(bool value) {
     _prefs.setBool('twitchLoggedIn', value);
     state = state.copyWith(twitchLoggedIn: value);
+  }
+
+  void setUpdateChannel(String channel) {
+    _prefs.setString('updateChannel', channel);
+    state = state.copyWith(updateChannel: channel);
+  }
+
+  void toggleSplitChapters() {
+    final newValue = !state.splitChapters;
+    _prefs.setBool('splitChapters', newValue);
+    state = state.copyWith(splitChapters: newValue);
+  }
+
+  void toggleDownloadSubtitles() {
+    final newValue = !state.downloadSubtitles;
+    _prefs.setBool('downloadSubtitles', newValue);
+    state = state.copyWith(downloadSubtitles: newValue);
+  }
+
+  void setSubtitleLanguages(List<String> languages) {
+    _prefs.setStringList('subtitleLanguages', languages);
+    state = state.copyWith(subtitleLanguages: languages);
+  }
+
+  void toggleDownloadAutoSubtitles() {
+    final newValue = !state.downloadAutoSubtitles;
+    _prefs.setBool('downloadAutoSubtitles', newValue);
+    state = state.copyWith(downloadAutoSubtitles: newValue);
+  }
+
+  void toggleEmbedSubtitles() {
+    final newValue = !state.embedSubtitles;
+    _prefs.setBool('embedSubtitles', newValue);
+    state = state.copyWith(embedSubtitles: newValue);
   }
 
   Future<void> clearAllCookies(String appDir) async {

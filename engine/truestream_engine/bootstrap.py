@@ -14,6 +14,21 @@ from truestream_engine.paths import get_paths, is_initialized
 
 CDN_BASE_URL = "https://cdn.truestream.app/binaries"
 
+CHANNEL_PATHS = {
+    "stable": "",
+    "nightly": "nightly",
+    "master": "master",
+}
+
+
+def _get_manifest_url() -> str:
+    paths = get_paths()
+    channel = paths.get("update_channel", "stable")
+    channel_path = CHANNEL_PATHS.get(channel, "")
+    if channel_path:
+        return f"{CDN_BASE_URL}/{channel_path}/manifest.json"
+    return f"{CDN_BASE_URL}/manifest.json"
+
 DEFAULT_MANIFEST = {
     "version": "1.0",
     "binaries": {
@@ -115,7 +130,7 @@ def bootstrap() -> dict:
     manifest_source = "cache"
 
     try:
-        manifest_url = f"{CDN_BASE_URL}/manifest.json"
+        manifest_url = _get_manifest_url()
         req = urllib.request.Request(
             manifest_url,
             headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
@@ -409,10 +424,10 @@ def update_check() -> dict:
             "updates_queued": ["yt_dlp", "deno"],
         }
 
-    # 1. Fetch manifest.json from CDN
+    # 1. Fetch manifest.json from CDN based on update channel
     manifest = DEFAULT_MANIFEST
     try:
-        manifest_url = f"{CDN_BASE_URL}/manifest.json"
+        manifest_url = _get_manifest_url()
         req = urllib.request.Request(
             manifest_url,
             headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}

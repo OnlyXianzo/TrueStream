@@ -45,15 +45,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           // Content Layer based on active beat
           Positioned.fill(
-            child: GestureDetector(
-              onTap: (_beat < 4) ? _nextBeat : null,
-              behavior: HitTestBehavior.opaque,
-              child: SafeArea(
-                child: AnimatedSwitcher(
-                  duration: 600.ms,
-                  switchInCurve: Curves.easeInOutCubic,
-                  switchOutCurve: Curves.easeInOutCubic,
-                  child: _buildBeatContent(context, colorScheme, textTheme),
+            child: Semantics(
+              label: _beat < 4 ? 'Tap to continue' : '',
+              button: _beat < 4,
+              excludeSemantics: _beat >= 4,
+              child: GestureDetector(
+                onTap: (_beat < 4) ? _nextBeat : null,
+                behavior: HitTestBehavior.opaque,
+                child: SafeArea(
+                  child: AnimatedSwitcher(
+                    duration: 600.ms,
+                    switchInCurve: Curves.easeInOutCubic,
+                    switchOutCurve: Curves.easeInOutCubic,
+                    child: _buildBeatContent(context, colorScheme, textTheme),
+                  ),
                 ),
               ),
             ),
@@ -297,7 +302,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white, size: 32),
+          Semantics(
+            label: title,
+            child: Icon(icon, color: Colors.white, size: 32),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(

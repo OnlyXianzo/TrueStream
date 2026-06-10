@@ -162,10 +162,13 @@ class _PresetCard extends ConsumerWidget {
                 ),
               ),
               if (isActive)
-                Icon(
-                  Icons.check_circle,
-                  color: colorScheme.primary,
-                  size: 24,
+                Semantics(
+                  label: 'Active preset',
+                  child: Icon(
+                    Icons.check_circle,
+                    color: colorScheme.primary,
+                    size: 24,
+                  ),
                 ),
               if (!preset.isPredefined) ...[
                 const SizedBox(width: 12),

@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../providers/settings_provider.dart';
 import 'presets_screen.dart';
+import 'subtitle_settings_screen.dart';
 import 'about_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -79,6 +80,37 @@ class SettingsScreen extends ConsumerWidget {
                   );
                 },
               ).animate().fadeIn(delay: 200.ms, duration: 300.ms).slideX(begin: 0.1),
+              _SettingNavItem(
+                icon: Icons.closed_caption_outlined,
+                title: 'Subtitle Settings',
+                subtitle: 'Language, auto-captions & embedding',
+                colorScheme: colorScheme,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SubtitleSettingsScreen(),
+                    ),
+                  );
+                },
+              ).animate().fadeIn(delay: 220.ms, duration: 300.ms).slideX(begin: 0.1),
+              Padding(
+                padding: const EdgeInsets.only(top: 24, bottom: 8),
+                child: Text(
+                  'Post-Processing',
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              _SettingSwitch(
+                icon: Icons.content_cut,
+                title: 'Split Chapters',
+                subtitle: 'Split video into chapters after download',
+                value: settings.splitChapters,
+                onChanged: () => ref.read(settingsProvider.notifier).toggleSplitChapters(),
+                colorScheme: colorScheme,
+              ).animate().fadeIn(delay: 240.ms, duration: 300.ms).slideX(begin: 0.1),
               _SettingSwitch(
                 icon: Icons.notifications_outlined,
                 title: 'Download Completion Alerts',
@@ -86,12 +118,12 @@ class SettingsScreen extends ConsumerWidget {
                 value: settings.completionAlerts,
                 onChanged: () => ref.read(settingsProvider.notifier).toggleCompletionAlerts(),
                 colorScheme: colorScheme,
-              ).animate().fadeIn(delay: 240.ms, duration: 300.ms).slideX(begin: 0.1),
+              ).animate().fadeIn(delay: 260.ms, duration: 300.ms).slideX(begin: 0.1),
               _SettingThemeSelector(
                 currentTheme: settings.themeMode,
                 onChanged: (mode) => ref.read(settingsProvider.notifier).setThemeMode(mode),
                 colorScheme: colorScheme,
-              ).animate().fadeIn(delay: 280.ms, duration: 300.ms).slideX(begin: 0.1),
+              ).animate().fadeIn(delay: 300.ms, duration: 300.ms).slideX(begin: 0.1),
               _SettingNavItem(
                 icon: Icons.info_outline,
                 title: 'About TrueStream',
@@ -104,12 +136,12 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   );
                 },
-              ).animate().fadeIn(delay: 320.ms, duration: 300.ms).slideX(begin: 0.1),
+              ).animate().fadeIn(delay: 340.ms, duration: 300.ms).slideX(begin: 0.1),
               _SettingAction(
                 icon: Icons.history,
                 title: 'Clear Search History',
                 colorScheme: colorScheme,
-              ).animate().fadeIn(delay: 360.ms, duration: 300.ms).slideX(begin: 0.1),
+              ).animate().fadeIn(delay: 380.ms, duration: 300.ms).slideX(begin: 0.1),
               const SizedBox(height: 32),
               // Version badge
               Center(
@@ -160,47 +192,53 @@ class _SettingSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: colorScheme.outline, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: textTheme.bodyLarge),
-                Text(
-                  subtitle,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+    return Semantics(
+      label: '$title, $subtitle, ${value ? 'enabled' : 'disabled'}',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Semantics(
+              label: title,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainer,
+                  shape: BoxShape.circle,
                 ),
-              ],
+                child: Icon(icon, color: colorScheme.outline, size: 20),
+              ),
             ),
-          ),
-          Switch.adaptive(
-            value: value,
-            onChanged: (_) => onChanged(),
-            activeTrackColor: colorScheme.primary,
-            inactiveTrackColor: colorScheme.surfaceContainerHighest,
-            thumbColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return colorScheme.onPrimary;
-              }
-              return colorScheme.outline;
-            }),
-          ),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: textTheme.bodyLarge),
+                  Text(
+                    subtitle,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: value,
+              onChanged: (_) => onChanged(),
+              activeTrackColor: colorScheme.primary,
+              inactiveTrackColor: colorScheme.surfaceContainerHighest,
+              thumbColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return colorScheme.onPrimary;
+                }
+                return colorScheme.outline;
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -225,40 +263,50 @@ class _SettingNavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: colorScheme.outline, size: 20),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: textTheme.bodyLarge),
-                  Text(
-                    subtitle,
-                    style: textTheme.labelSmall?.copyWith(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
+    return Semantics(
+      button: true,
+      label: '$title, $subtitle',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Row(
+            children: [
+              Semantics(
+                label: title,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainer,
+                    shape: BoxShape.circle,
                   ),
-                ],
+                  child: Icon(icon, color: colorScheme.outline, size: 20),
+                ),
               ),
-            ),
-            Icon(Icons.chevron_right, color: colorScheme.outline, size: 20),
-          ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: textTheme.bodyLarge),
+                    Text(
+                      subtitle,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Semantics(
+                label: 'Navigate',
+                child: Icon(Icons.chevron_right, color: colorScheme.outline, size: 20),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -284,14 +332,17 @@ class _SettingAction extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHigh,
-              shape: BoxShape.circle,
+          Semantics(
+            label: title,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHigh,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: colorScheme.outline, size: 20),
             ),
-            child: Icon(icon, color: colorScheme.outline, size: 20),
           ),
           const SizedBox(width: 16),
           Text(
@@ -319,56 +370,65 @@ class _SettingThemeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.palette_outlined, color: colorScheme.outline, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Appearance', style: textTheme.bodyLarge),
-                Text(
-                  'Choose Light, Dark, or System mode',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+    return Semantics(
+      label: 'Appearance, Choose Light, Dark, or System mode',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Semantics(
+              label: 'Appearance',
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainer,
+                  shape: BoxShape.circle,
                 ),
-              ],
+                child: Icon(Icons.palette_outlined, color: colorScheme.outline, size: 20),
+              ),
             ),
-          ),
-          DropdownButton<AppThemeMode>(
-            value: currentTheme,
-            onChanged: (val) {
-              if (val != null) onChanged(val);
-            },
-            dropdownColor: colorScheme.surfaceContainerHigh,
-            items: const [
-              DropdownMenuItem(
-                value: AppThemeMode.system,
-                child: Text('System'),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Appearance', style: textTheme.bodyLarge),
+                  Text(
+                    'Choose Light, Dark, or System mode',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
-              DropdownMenuItem(
-                value: AppThemeMode.light,
-                child: Text('Light'),
+            ),
+            Semantics(
+              label: 'Theme selection, currently ${currentTheme.name}',
+              child: DropdownButton<AppThemeMode>(
+                value: currentTheme,
+                onChanged: (val) {
+                  if (val != null) onChanged(val);
+                },
+                dropdownColor: colorScheme.surfaceContainerHigh,
+                items: const [
+                  DropdownMenuItem(
+                    value: AppThemeMode.system,
+                    child: Text('System'),
+                  ),
+                  DropdownMenuItem(
+                    value: AppThemeMode.light,
+                    child: Text('Light'),
+                  ),
+                  DropdownMenuItem(
+                    value: AppThemeMode.dark,
+                    child: Text('Dark'),
+                  ),
+                ],
               ),
-              DropdownMenuItem(
-                value: AppThemeMode.dark,
-                child: Text('Dark'),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

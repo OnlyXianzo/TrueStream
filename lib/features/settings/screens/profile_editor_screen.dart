@@ -126,18 +126,21 @@ class _ProfileEditorScreenState extends ConsumerState<ProfileEditorScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Quality Ceiling', style: textTheme.bodyLarge),
-                    DropdownButton<String>(
-                      value: _selectedQuality,
-                      dropdownColor: colorScheme.surfaceContainerHigh,
-                      items: const [
-                        DropdownMenuItem(value: '4k', child: Text('4K Ultra HD')),
-                        DropdownMenuItem(value: '1080p', child: Text('1080p Full HD')),
-                        DropdownMenuItem(value: '720p', child: Text('720p HD')),
-                        DropdownMenuItem(value: 'best', child: Text('Best Available')),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) setState(() => _selectedQuality = val);
-                      },
+                    Semantics(
+                      label: 'Quality Ceiling, currently $_selectedQuality',
+                      child: DropdownButton<String>(
+                        value: _selectedQuality,
+                        dropdownColor: colorScheme.surfaceContainerHigh,
+                        items: const [
+                          DropdownMenuItem(value: '4k', child: Text('4K Ultra HD')),
+                          DropdownMenuItem(value: '1080p', child: Text('1080p Full HD')),
+                          DropdownMenuItem(value: '720p', child: Text('720p HD')),
+                          DropdownMenuItem(value: 'best', child: Text('Best Available')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setState(() => _selectedQuality = val);
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -146,17 +149,20 @@ class _ProfileEditorScreenState extends ConsumerState<ProfileEditorScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Preferred Codec', style: textTheme.bodyLarge),
-                    DropdownButton<String>(
-                      value: _selectedCodec,
-                      dropdownColor: colorScheme.surfaceContainerHigh,
-                      items: const [
-                        DropdownMenuItem(value: 'av01', child: Text('AV1 (Maximum Compression)')),
-                        DropdownMenuItem(value: 'vp9', child: Text('VP9 (Balanced)')),
-                        DropdownMenuItem(value: 'h264', child: Text('H.264 (Universal)')),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) setState(() => _selectedCodec = val);
-                      },
+                    Semantics(
+                      label: 'Preferred Codec, currently $_selectedCodec',
+                      child: DropdownButton<String>(
+                        value: _selectedCodec,
+                        dropdownColor: colorScheme.surfaceContainerHigh,
+                        items: const [
+                          DropdownMenuItem(value: 'av01', child: Text('AV1 (Maximum Compression)')),
+                          DropdownMenuItem(value: 'vp9', child: Text('VP9 (Balanced)')),
+                          DropdownMenuItem(value: 'h264', child: Text('H.264 (Universal)')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setState(() => _selectedCodec = val);
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -166,23 +172,26 @@ class _ProfileEditorScreenState extends ConsumerState<ProfileEditorScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Preferred Container', style: textTheme.bodyLarge),
-                  DropdownButton<String>(
-                    value: _selectedContainer,
-                    dropdownColor: colorScheme.surfaceContainerHigh,
-                    items: _audioOnly
-                        ? const [
-                            DropdownMenuItem(value: 'mp3', child: Text('MP3')),
-                            DropdownMenuItem(value: 'opus', child: Text('Opus')),
-                            DropdownMenuItem(value: 'flac', child: Text('FLAC (Lossless)')),
-                          ]
-                        : const [
-                            DropdownMenuItem(value: 'mkv', child: Text('MKV')),
-                            DropdownMenuItem(value: 'mp4', child: Text('MP4')),
-                            DropdownMenuItem(value: 'webm', child: Text('WebM')),
-                          ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedContainer = val);
-                    },
+                  Semantics(
+                    label: 'Preferred Container, currently $_selectedContainer',
+                    child: DropdownButton<String>(
+                      value: _selectedContainer,
+                      dropdownColor: colorScheme.surfaceContainerHigh,
+                      items: _audioOnly
+                          ? const [
+                              DropdownMenuItem(value: 'mp3', child: Text('MP3')),
+                              DropdownMenuItem(value: 'opus', child: Text('Opus')),
+                              DropdownMenuItem(value: 'flac', child: Text('FLAC (Lossless)')),
+                            ]
+                          : const [
+                              DropdownMenuItem(value: 'mkv', child: Text('MKV')),
+                              DropdownMenuItem(value: 'mp4', child: Text('MP4')),
+                              DropdownMenuItem(value: 'webm', child: Text('WebM')),
+                            ],
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedContainer = val);
+                      },
+                    ),
                   ),
                 ],
               ),

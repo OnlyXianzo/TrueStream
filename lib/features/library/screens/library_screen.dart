@@ -208,10 +208,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.playlist_add,
-              size: 64,
-              color: colorScheme.outline.withValues(alpha: 0.5),
+            Semantics(
+              label: 'No playlists',
+              child: Icon(
+                Icons.playlist_add,
+                size: 64,
+                color: colorScheme.outline.withValues(alpha: 0.5),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -266,7 +269,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
             ),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: Semantics(
+              label: 'Open playlist',
+              child: const Icon(Icons.chevron_right),
+            ),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -296,68 +302,79 @@ class _LibraryItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: isDownloading ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 128,
-            height: 72,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: isDownloading
-                ? Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colorScheme.primary.withValues(alpha: 0.2),
+    return Semantics(
+      label: '${item.title}, ${isDownloading ? 'downloading' : 'completed'}',
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          crossAxisAlignment: isDownloading ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 128,
+              height: 72,
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: isDownloading
+                  ? Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: colorScheme.primary.withValues(alpha: 0.2),
+                          ),
+                          child: Semantics(
+                            label: 'Downloading',
+                            child: Icon(
+                              Icons.downloading,
+                              color: colorScheme.primary,
+                              size: 20,
+                            ),
+                          ),
                         ),
+                      ],
+                    )
+                  : Semantics(
+                      label: 'Completed',
+                      child: Icon(
+                          Icons.image_outlined,
+                          color: colorScheme.outline.withValues(alpha: 0.4),
+                          size: 32,
+                        ),
+                    ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Semantics(
+                        label: 'More options',
                         child: Icon(
-                          Icons.downloading,
-                          color: colorScheme.primary,
-                          size: 20,
+                          Icons.more_vert,
+                          size: 18,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
-                  )
-                : Icon(
-                    Icons.image_outlined,
-                    color: colorScheme.outline.withValues(alpha: 0.4),
-                    size: 32,
                   ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.title,
-                        style: textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Icon(
-                      Icons.more_vert,
-                      size: 18,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ],
-                ),
                 if (isDownloading) ...[
                   const SizedBox(height: 8),
                   ClipRRect(
@@ -422,7 +439,8 @@ class _LibraryItem extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   String _formatBytes(int bytes) {

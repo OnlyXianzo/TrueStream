@@ -1,4 +1,6 @@
 DEFAULT_CFG = {
+    # ── Update ────────────────────────────────────────────────────────────
+    "update_channel": "stable",
     # ── Format ──────────────────────────────────────────────────────────
     "format_code": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best",
     "audio_only": False,

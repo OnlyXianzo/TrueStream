@@ -116,20 +116,20 @@ class _AppShellState extends ConsumerState<AppShell> {
               unselectedLabelTextStyle: TextStyle(
                 color: colorScheme.onSurfaceVariant,
               ),
-              destinations: const [
+              destinations: [
                 NavigationRailDestination(
-                  icon: Icon(Icons.download),
-                  selectedIcon: Icon(Icons.download),
+                  icon: Semantics(label: 'Download', child: Icon(Icons.download)),
+                  selectedIcon: Semantics(label: 'Download', child: Icon(Icons.download)),
                   label: Text('Download'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.folder_open),
-                  selectedIcon: Icon(Icons.folder),
+                  icon: Semantics(label: 'Library', child: Icon(Icons.folder_open)),
+                  selectedIcon: Semantics(label: 'Library', child: Icon(Icons.folder)),
                   label: Text('Library'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.settings),
-                  selectedIcon: Icon(Icons.settings),
+                  icon: Semantics(label: 'Settings', child: Icon(Icons.settings)),
+                  selectedIcon: Semantics(label: 'Settings', child: Icon(Icons.settings)),
                   label: Text('Settings'),
                 ),
               ],
@@ -215,50 +215,61 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    if (isActive) {
-      return GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: colorScheme.onPrimaryContainer, size: 20),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onPrimaryContainer,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: colorScheme.onSurfaceVariant, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurfaceVariant,
-              ),
+    final child = isActive
+        ? Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(24),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Semantics(
+                  label: label,
+                  child: Icon(icon, color: colorScheme.onPrimaryContainer, size: 20),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          )
+        : Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Semantics(
+                  label: label,
+                  child: Icon(icon, color: colorScheme.onSurfaceVariant, size: 20),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          );
+
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          child: child,
         ),
       ),
     );

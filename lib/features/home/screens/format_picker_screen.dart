@@ -231,10 +231,13 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            _suggestsVpn ? Icons.vpn_lock : Icons.error_outline,
-                            size: 48,
-                            color: colorScheme.error,
+                          Semantics(
+                            label: _suggestsVpn ? 'VPN required' : 'Error',
+                            child: Icon(
+                              _suggestsVpn ? Icons.vpn_lock : Icons.error_outline,
+                              size: 48,
+                              color: colorScheme.error,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           Text(_error!, textAlign: TextAlign.center),
@@ -326,17 +329,20 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('Preferred Container:', style: textTheme.bodyMedium),
-                            DropdownButton<String>(
-                              value: _selectedContainer,
-                              dropdownColor: colorScheme.surfaceContainerHigh,
-                              items: const [
-                                DropdownMenuItem(value: 'mkv', child: Text('MKV (Recommended)')),
-                                DropdownMenuItem(value: 'mp4', child: Text('MP4')),
-                                DropdownMenuItem(value: 'webm', child: Text('WebM')),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) setState(() => _selectedContainer = val);
-                              },
+                            Semantics(
+                              label: 'Preferred Container, currently $_selectedContainer',
+                              child: DropdownButton<String>(
+                                value: _selectedContainer,
+                                dropdownColor: colorScheme.surfaceContainerHigh,
+                                items: const [
+                                  DropdownMenuItem(value: 'mkv', child: Text('MKV (Recommended)')),
+                                  DropdownMenuItem(value: 'mp4', child: Text('MP4')),
+                                  DropdownMenuItem(value: 'webm', child: Text('WebM')),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) setState(() => _selectedContainer = val);
+                                },
+                              ),
                             ),
                           ],
                         ),
@@ -345,23 +351,26 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('Add to Playlist:', style: textTheme.bodyMedium),
-                            DropdownButton<Playlist?>(
-                              value: _selectedPlaylist,
-                              dropdownColor: colorScheme.surfaceContainerHigh,
-                              hint: const Text('None'),
-                              items: [
-                                const DropdownMenuItem<Playlist?>(
-                                  value: null,
-                                  child: Text('None'),
-                                ),
-                                ...ref.watch(playlistProvider).map((p) => DropdownMenuItem<Playlist?>(
-                                      value: p,
-                                      child: Text(p.name),
-                                    )),
-                              ],
-                              onChanged: (val) {
-                                setState(() => _selectedPlaylist = val);
-                              },
+                            Semantics(
+                              label: 'Add to Playlist, ${_selectedPlaylist != null ? _selectedPlaylist!.name : "none"} selected',
+                              child: DropdownButton<Playlist?>(
+                                value: _selectedPlaylist,
+                                dropdownColor: colorScheme.surfaceContainerHigh,
+                                hint: const Text('None'),
+                                items: [
+                                  const DropdownMenuItem<Playlist?>(
+                                    value: null,
+                                    child: Text('None'),
+                                  ),
+                                  ...ref.watch(playlistProvider).map((p) => DropdownMenuItem<Playlist?>(
+                                        value: p,
+                                        child: Text(p.name),
+                                      )),
+                                ],
+                                onChanged: (val) {
+                                  setState(() => _selectedPlaylist = val);
+                                },
+                              ),
                             ),
                           ],
                         ),
@@ -415,91 +424,100 @@ class _FormatPickerScreenState extends ConsumerState<FormatPickerScreen> {
         ),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: InkWell(
-        onTap: () => setState(() {
-          if (isVideo) {
-            _selectedVideoFormat = formatId;
-          } else {
-            _selectedAudioFormat = formatId;
-          }
-        }),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              _buildRadio(isSelected, colorScheme),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          isVideo
-                              ? '$formatId · ${fmt['height']}p${fmt['fps']}'
-                              : '$formatId · ${fmt['acodec'] ?? 'Audio'} · ${fmt['abr'] != null ? (fmt['abr'] as num).toInt() : 'unknown'} kbps',
-                          style: textTheme.mono.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        if (isHdr) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: colorScheme.tertiaryContainer,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              fmt['dynamic_range'],
-                              style: textTheme.labelSmall?.copyWith(
-                                color: colorScheme.onTertiaryContainer,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
+      child: Semantics(
+        button: true,
+        label: '${isVideo ? "Video" : "Audio"} format $formatId${isSelected ? ", selected" : ""}',
+        child: InkWell(
+          onTap: () => setState(() {
+            if (isVideo) {
+              _selectedVideoFormat = formatId;
+            } else {
+              _selectedAudioFormat = formatId;
+            }
+          }),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                _buildRadio(isSelected, formatId, colorScheme),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            isVideo
+                                ? '$formatId · ${fmt['height']}p${fmt['fps']}'
+                                : '$formatId · ${fmt['acodec'] ?? 'Audio'} · ${fmt['abr'] != null ? (fmt['abr'] as num).toInt() : 'unknown'} kbps',
+                            style: textTheme.mono.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          if (isHdr) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: colorScheme.tertiaryContainer,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                fmt['dynamic_range'],
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.onTertiaryContainer,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                    Text(
-                      isVideo
-                          ? '${fmt['vcodec']} · ${fmt['ext']} · ${_formatSize(fmt['filesize'])}'
-                          : '${fmt['ext']} · ${_formatSize(fmt['filesize'])}',
-                      style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
+                      ),
+                      Text(
+                        isVideo
+                            ? '${fmt['vcodec']} · ${fmt['ext']} · ${_formatSize(fmt['filesize'])}'
+                            : '${fmt['ext']} · ${_formatSize(fmt['filesize'])}',
+                        style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildRadio(bool isSelected, ColorScheme colorScheme) {
-    return Container(
-      width: 20,
-      height: 20,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isSelected ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.5),
-          width: 2,
+  Widget _buildRadio(bool isSelected, String formatId, ColorScheme colorScheme) {
+    return Semantics(
+      label: 'Select format $formatId',
+      button: true,
+      selected: isSelected,
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.5),
+            width: 2,
+          ),
         ),
+        alignment: Alignment.center,
+        child: isSelected
+            ? Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colorScheme.primary,
+                ),
+              )
+            : null,
       ),
-      alignment: Alignment.center,
-      child: isSelected
-          ? Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colorScheme.primary,
-              ),
-            )
-          : null,
     );
   }
 }

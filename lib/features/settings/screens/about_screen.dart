@@ -102,7 +102,7 @@ class AboutScreen extends StatelessWidget {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.star_border),
+                      icon: Semantics(label: 'GitHub star', child: Icon(Icons.star_border)),
                       label: const Text('Star & Copy GitHub Link'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colorScheme.primary,
@@ -121,10 +121,10 @@ class AboutScreen extends StatelessWidget {
             _buildSectionHeader(context, 'SUPPORT & FEEDBACK'),
             const SizedBox(height: 12),
             ListTile(
-              leading: const Icon(Icons.feedback_outlined),
+              leading: Semantics(label: 'Feedback', child: Icon(Icons.feedback_outlined)),
               title: const Text('Send Feedback'),
               subtitle: const Text('Report bugs or request features'),
-              trailing: const Icon(Icons.chevron_right),
+              trailing: Semantics(label: 'Open', child: Icon(Icons.chevron_right)),
               onTap: () {
                 Clipboard.setData(
                   const ClipboardData(
@@ -140,10 +140,10 @@ class AboutScreen extends StatelessWidget {
             ),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.policy_outlined),
+              leading: Semantics(label: 'Licenses', child: Icon(Icons.policy_outlined)),
               title: const Text('Open Source Licenses'),
               subtitle: const Text('Third-party software notices'),
-              trailing: const Icon(Icons.chevron_right),
+              trailing: Semantics(label: 'Open', child: Icon(Icons.chevron_right)),
               onTap: () {
                 showLicensePage(
                   context: context,
