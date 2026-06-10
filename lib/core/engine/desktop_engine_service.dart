@@ -244,4 +244,10 @@ class DesktopEngineService implements EngineService {
       'config': config,
     });
   }
+
+  @override
+  Future<String?> getSharedUrl() => Future.value(null);
+
+  @override
+  Stream<String> get sharedUrlStream => const Stream.empty();
 }

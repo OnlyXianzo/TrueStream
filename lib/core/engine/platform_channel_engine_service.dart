@@ -6,6 +6,24 @@ import 'engine_service.dart';
 class PlatformChannelEngineService implements EngineService {
   final MethodChannel _channel = const MethodChannel('com.theonly.truestream/engine');
   final EventChannel _eventChannel = const EventChannel('com.theonly.truestream/progress');
+  final _intentController = StreamController<String>.broadcast();
+
+  PlatformChannelEngineService() {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'intent/shared_url') {
+        final arguments = call.arguments;
+        final map = arguments is Map ? Map<String, dynamic>.from(arguments) : null;
+        final url = map?['url'] as String?;
+        if (url != null && url.isNotEmpty) {
+          _intentController.add(url);
+        }
+      }
+      return null;
+    });
+  }
+
+  @override
+  Stream<String> get sharedUrlStream => _intentController.stream;
 
   @override
   Future<Map<String, dynamic>> bootstrap() async {
@@ -73,5 +91,15 @@ class PlatformChannelEngineService implements EngineService {
       'config': config,
     });
     return Map<String, dynamic>.from(result ?? {});
+  }
+
+  @override
+  Future<String?> getSharedUrl() async {
+    try {
+      final result = await _channel.invokeMethod<Map>('intent/get_shared');
+      return result?['url'] as String?;
+    } catch (_) {
+      return null;
+    }
   }
 }

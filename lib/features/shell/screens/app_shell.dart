@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 import '../../home/screens/home_screen.dart';
 import '../../library/screens/library_screen.dart';
 import '../../settings/screens/settings_screen.dart';
+import '../../../providers/download_provider.dart';
+import '../../../providers/settings_provider.dart';
+import '../../../core/engine/engine_provider.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -13,6 +18,72 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   int _currentIndex = 0;
+  StreamSubscription<String>? _intentSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSharedUrlListening();
+  }
+
+  @override
+  void dispose() {
+    _intentSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _initSharedUrlListening() {
+    final engine = ref.read(engineProvider);
+    _intentSubscription = engine.sharedUrlStream.listen((url) {
+      _handleSharedUrl(url);
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final sharedUrl = await engine.getSharedUrl();
+      if (sharedUrl != null && sharedUrl.isNotEmpty) {
+        _handleSharedUrl(sharedUrl);
+      }
+    });
+  }
+
+  void _handleSharedUrl(String url) {
+    if (url.isEmpty) return;
+
+    final settings = ref.read(settingsProvider);
+    if (settings.autoStartDownloadOnShare) {
+      final downloadId = const Uuid().v4();
+      final config = <String, dynamic>{
+        'container': settings.qualityCeiling == 'best' ? 'mkv' : 'mp4',
+        'quality_ceiling': settings.qualityCeiling,
+        'audio_only': settings.audioOnly,
+      };
+
+      ref.read(engineProvider).startDownload(
+        url: url,
+        downloadId: downloadId,
+        config: config,
+        networkType: 'wifi',
+      );
+
+      ref.read(downloadProvider.notifier).addDownload(
+        DownloadItem(
+          id: downloadId,
+          title: url,
+          url: url,
+          status: 'downloading',
+        ),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Auto-starting download from shared link')),
+      );
+
+      setState(() => _currentIndex = 0);
+    } else {
+      ref.read(sharedUrlProvider.notifier).state = url;
+      setState(() => _currentIndex = 0);
+    }
+  }
 
   final _screens = [
     const HomeScreen(),

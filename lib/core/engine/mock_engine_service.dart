@@ -207,6 +207,12 @@ class MockEngineService implements EngineService {
     };
   }
 
+  @override
+  Future<String?> getSharedUrl() => Future.value(null);
+
+  @override
+  Stream<String> get sharedUrlStream => const Stream.empty();
+
   void dispose() {
     _progressController.close();
   }

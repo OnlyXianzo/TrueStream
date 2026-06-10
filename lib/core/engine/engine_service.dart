@@ -17,4 +17,6 @@ abstract class EngineService {
     required String url,
     required Map<String, dynamic> config,
   });
+  Future<String?> getSharedUrl();
+  Stream<String> get sharedUrlStream;
 }

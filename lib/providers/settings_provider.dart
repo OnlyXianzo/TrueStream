@@ -47,6 +47,7 @@ class AppSettings {
   final bool audioOnly;
   final String? proxy;
   final bool verbose;
+  final bool autoStartDownloadOnShare;
 
   const AppSettings({
     this.wifiOnly = false,
@@ -59,6 +60,7 @@ class AppSettings {
     this.audioOnly = false,
     this.proxy,
     this.verbose = false,
+    this.autoStartDownloadOnShare = false,
   });
 
   AppSettings copyWith({
@@ -72,6 +74,7 @@ class AppSettings {
     bool? audioOnly,
     String? proxy,
     bool? verbose,
+    bool? autoStartDownloadOnShare,
   }) {
     return AppSettings(
       wifiOnly: wifiOnly ?? this.wifiOnly,
@@ -84,6 +87,7 @@ class AppSettings {
       audioOnly: audioOnly ?? this.audioOnly,
       proxy: proxy ?? this.proxy,
       verbose: verbose ?? this.verbose,
+      autoStartDownloadOnShare: autoStartDownloadOnShare ?? this.autoStartDownloadOnShare,
     );
   }
 }
@@ -110,6 +114,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final audioOnly = _prefs.getBool('audioOnly') ?? false;
     final proxy = _prefs.getString('proxy');
     final verbose = _prefs.getBool('verbose') ?? false;
+    final autoStartDownloadOnShare = _prefs.getBool('autoStartDownloadOnShare') ?? false;
     
     state = AppSettings(
       wifiOnly: wifiOnly,
@@ -122,6 +127,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       audioOnly: audioOnly,
       proxy: proxy,
       verbose: verbose,
+      autoStartDownloadOnShare: autoStartDownloadOnShare,
     );
   }
 
@@ -182,6 +188,12 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final newValue = !state.verbose;
     _prefs.setBool('verbose', newValue);
     state = state.copyWith(verbose: newValue);
+  }
+
+  void toggleAutoStartDownloadOnShare() {
+    final newValue = !state.autoStartDownloadOnShare;
+    _prefs.setBool('autoStartDownloadOnShare', newValue);
+    state = state.copyWith(autoStartDownloadOnShare: newValue);
   }
 }
 
