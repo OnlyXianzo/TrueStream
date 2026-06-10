@@ -37,13 +37,32 @@ def test_ffmpeg_path_added():
 
 def test_aria2c_wired_when_enabled():
     _paths["aria2c_path"] = "/usr/bin/aria2c"
-    opts = build_ydl_opts(config={"use_aria2": True})
+    opts = build_ydl_opts(config={"aria2c_enabled": True, "aria2c_chunks": 5})
     assert opts["external_downloader"] == "aria2c"
+    assert "-x5" in opts["external_downloader_args"]
 
 
 def test_aria2c_not_wired_when_disabled():
-    opts = build_ydl_opts(config={"use_aria2": False})
+    _paths["aria2c_path"] = "/usr/bin/aria2c"
+    opts = build_ydl_opts(config={"aria2c_enabled": False})
     assert "external_downloader" not in opts
+
+
+def test_aria2c_without_path_not_enabled():
+    opts = build_ydl_opts(config={"aria2c_enabled": True})
+    assert "external_downloader" not in opts
+
+
+def test_aria2c_max_speed_applied():
+    _paths["aria2c_path"] = "/usr/bin/aria2c"
+    opts = build_ydl_opts(config={
+        "aria2c_enabled": True,
+        "aria2c_chunks": 8,
+        "aria2c_max_speed": "10M",
+    })
+    assert opts["external_downloader"] == "aria2c"
+    assert "-x8" in opts["external_downloader_args"]
+    assert "--max-download-limit=10M" in opts["external_downloader_args"]
 
 
 def test_rate_limit_applied():
