@@ -41,7 +41,16 @@ android {
         versionName = flutter.versionName
 
         ndk {
-            abiFilters.addAll(setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+            abiFilters.clear()
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
+        python {
+            version = "3.11"
+            buildPython("/usr/bin/python3")
+            pip {
+                install("yt-dlp")
+                install("curl_cffi")
+            }
         }
     }
 
@@ -65,12 +74,6 @@ android {
 }
 
 chaquopy {
-    defaultConfig {
-        version = "3.11"
-        pip {
-            install("yt-dlp>=2025.0.0")
-        }
-    }
     sourceSets {
         getByName("main") {
             srcDir("../../engine")

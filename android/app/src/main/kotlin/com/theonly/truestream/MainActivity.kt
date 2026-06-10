@@ -18,9 +18,17 @@ class MainActivity : FlutterActivity() {
     private var eventSink: EventChannel.EventSink? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-        super.configureFlutterEngine(flutterEngine)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(this))
+        }
+        flutterEngine?.let {
+            setupChannels(it)
+        }
+    }
 
+    private fun setupChannels(flutterEngine: FlutterEngine) {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ENGINE_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "paths/set" -> {
@@ -46,8 +54,6 @@ class MainActivity : FlutterActivity() {
                         }
                     }
 
-                    initPython()
-
                     scope.launch(Dispatchers.IO) {
                         try {
                             val py = Python.getInstance()
@@ -64,7 +70,6 @@ class MainActivity : FlutterActivity() {
                     }
                 }
                 "engine/bootstrap" -> {
-                    initPython()
                     scope.launch(Dispatchers.IO) {
                         try {
                             val py = Python.getInstance()
@@ -76,7 +81,7 @@ class MainActivity : FlutterActivity() {
                             }
                         } catch (e: java.lang.Exception) {
                             withContext(Dispatchers.Main) {
-                                result.error("ERROR_BOOTSTRAP_FAILED", e.message, null)
+                                result.error("ERROR_BOOTSTRAP_FAILED", e.message, e.message ?: e.toString())
                             }
                         }
                     }
@@ -87,7 +92,6 @@ class MainActivity : FlutterActivity() {
                     val config = call.argument<Map<String, Any>>("config")
                     val networkType = call.argument<String>("network_type")
 
-                    initPython()
                     scope.launch(Dispatchers.IO) {
                         try {
                             val py = Python.getInstance()
@@ -110,7 +114,6 @@ class MainActivity : FlutterActivity() {
                 }
                 "download/cancel" -> {
                     val downloadId = call.argument<String>("download_id")
-                    initPython()
                     scope.launch(Dispatchers.IO) {
                         try {
                             val py = Python.getInstance()
@@ -130,7 +133,6 @@ class MainActivity : FlutterActivity() {
                 "formats/get" -> {
                     val url = call.argument<String>("url")
                     val config = call.argument<Map<String, Any>>("config")
-                    initPython()
                     scope.launch(Dispatchers.IO) {
                         try {
                             val py = Python.getInstance()
@@ -150,7 +152,6 @@ class MainActivity : FlutterActivity() {
                 "playlist/info" -> {
                     val url = call.argument<String>("url")
                     val config = call.argument<Map<String, Any>>("config")
-                    initPython()
                     scope.launch(Dispatchers.IO) {
                         try {
                             val py = Python.getInstance()
@@ -169,7 +170,6 @@ class MainActivity : FlutterActivity() {
                 }
                 "resume/scan" -> {
                     val cacheDir = call.argument<String>("cache_dir")
-                    initPython()
                     scope.launch(Dispatchers.IO) {
                         try {
                             val py = Python.getInstance()
@@ -211,12 +211,6 @@ class MainActivity : FlutterActivity() {
             result[key.toString()] = value.toJava(Any::class.java)
         }
         return result
-    }
-
-    private fun initPython() {
-        if (!Python.isStarted()) {
-            Python.start(AndroidPlatform(applicationContext))
-        }
     }
 
     @Suppress("UNCHECKED_CAST")
