@@ -124,4 +124,82 @@ class TestBootstrap:
 
     def test_detect_js_runtime_default_none(self):
         result = _detect_js_runtime()
-        assert result["name"] in ("quickjs", "none")
+        assert result["name"] in ("quickjs", "deno", "none")
+
+    def test_download_and_extract_binary_zip(self, monkeypatch):
+        import io
+        import zipfile
+        import hashlib
+        import tempfile
+        import urllib.request
+        from truestream_engine.bootstrap import _download_and_extract_binary
+
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w") as z:
+            z.writestr("ffmpeg", "dummy_ffmpeg_content")
+        zip_bytes = zip_buffer.getvalue()
+        zip_sha = hashlib.sha256(zip_bytes).hexdigest()
+
+        class MockResponse:
+            def __init__(self, data):
+                self.data = data
+                self.read_done = False
+            def read(self, *args, **kwargs):
+                if self.read_done:
+                    return b""
+                self.read_done = True
+                return self.data
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                pass
+
+        monkeypatch.setattr(urllib.request, "urlopen", lambda req, timeout=None: MockResponse(zip_bytes))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dest_path = os.path.join(tmpdir, "bin", "ffmpeg")
+            _download_and_extract_binary("https://example.com/ffmpeg.zip", zip_sha, dest_path, tmpdir)
+            
+            assert os.path.exists(dest_path)
+            with open(dest_path, "r") as f:
+                assert f.read() == "dummy_ffmpeg_content"
+
+    def test_download_and_extract_binary_tar(self, monkeypatch):
+        import io
+        import tarfile
+        import hashlib
+        import tempfile
+        import urllib.request
+        from truestream_engine.bootstrap import _download_and_extract_binary
+
+        tar_buffer = io.BytesIO()
+        with tarfile.open(fileobj=tar_buffer, mode="w:gz") as t:
+            tar_info = tarfile.TarInfo(name="ffmpeg")
+            tar_info.size = len("dummy_ffmpeg_tar_content")
+            t.addfile(tar_info, io.BytesIO(b"dummy_ffmpeg_tar_content"))
+        tar_bytes = tar_buffer.getvalue()
+        tar_sha = hashlib.sha256(tar_bytes).hexdigest()
+
+        class MockResponse:
+            def __init__(self, data):
+                self.data = data
+                self.read_done = False
+            def read(self, *args, **kwargs):
+                if self.read_done:
+                    return b""
+                self.read_done = True
+                return self.data
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                pass
+
+        monkeypatch.setattr(urllib.request, "urlopen", lambda req, timeout=None: MockResponse(tar_bytes))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dest_path = os.path.join(tmpdir, "bin", "ffmpeg")
+            _download_and_extract_binary("https://example.com/ffmpeg.tar.gz", tar_sha, dest_path, tmpdir)
+            
+            assert os.path.exists(dest_path)
+            with open(dest_path, "r") as f:
+                assert f.read() == "dummy_ffmpeg_tar_content"
