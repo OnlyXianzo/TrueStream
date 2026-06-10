@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../providers/settings_provider.dart';
+import 'observed_sources_screen.dart';
 import 'presets_screen.dart';
 import 'subtitle_settings_screen.dart';
 import 'about_screen.dart';
@@ -93,6 +94,29 @@ class SettingsScreen extends ConsumerWidget {
                   );
                 },
               ).animate().fadeIn(delay: 220.ms, duration: 300.ms).slideX(begin: 0.1),
+              Padding(
+                padding: const EdgeInsets.only(top: 24, bottom: 8),
+                child: Text(
+                  'Content Filtering',
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              _SettingNavItem(
+                icon: Icons.block,
+                title: 'SponsorBlock',
+                subtitle: 'Skip sponsored segments',
+                colorScheme: colorScheme,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SponsorBlockSettingsScreen(),
+                    ),
+                  );
+                },
+              ).animate().fadeIn(delay: 240.ms, duration: 300.ms).slideX(begin: 0.1),
               Padding(
                 padding: const EdgeInsets.only(top: 24, bottom: 8),
                 child: Text(

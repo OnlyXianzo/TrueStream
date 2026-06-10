@@ -10,6 +10,7 @@ class DownloadItem {
   final int downloadedBytes;
   final int totalBytes;
   final String? thumbnailUrl;
+  final String? filePath;
   final DateTime addedAt;
   final String? fileSize;
   final String? completedDate;
@@ -26,6 +27,7 @@ class DownloadItem {
     this.downloadedBytes = 0,
     this.totalBytes = 0,
     this.thumbnailUrl,
+    this.filePath,
     DateTime? addedAt,
     this.fileSize,
     this.completedDate,
@@ -59,6 +61,7 @@ class DownloadNotifier extends StateNotifier<List<DownloadItem>> {
         downloadedBytes: downloadedBytes,
         totalBytes: d.totalBytes,
         thumbnailUrl: d.thumbnailUrl,
+        filePath: d.filePath,
         addedAt: d.addedAt,
         fileSize: d.fileSize,
         completedDate: progress >= 1.0 ? 'Today' : null,
@@ -89,6 +92,7 @@ class DownloadNotifier extends StateNotifier<List<DownloadItem>> {
           downloadedBytes: downloaded,
           totalBytes: total,
           thumbnailUrl: d.thumbnailUrl,
+          filePath: d.filePath,
           addedAt: d.addedAt,
         );
       }).toList();

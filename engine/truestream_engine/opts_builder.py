@@ -4,6 +4,19 @@ from truestream_engine.format_selector import build_format_string
 from truestream_engine.hooks import build_progress_hook, build_postprocessor_hook
 
 
+def apply_aria2c_opts(opts: dict, config: dict) -> dict:
+    from truestream_engine.paths import get_paths
+    if config.get("aria2c_enabled") and get_paths().get("aria2c_path"):
+        chunks = config.get("aria2c_chunks", 5)
+        args = [f"-x{chunks}", "-k1M", "--min-split-size=1M"]
+        max_speed = config.get("aria2c_max_speed")
+        if max_speed:
+            args.append(f"--max-download-limit={max_speed}")
+        opts["external_downloader"] = "aria2c"
+        opts["external_downloader_args"] = args
+    return opts
+
+
 def build_ydl_opts(
     config: dict | None = None,
     network_type: str = "wifi",
@@ -30,6 +43,8 @@ def build_ydl_opts(
         "fragment_retries": int(cfg["fragment_retries"]),
     }
 
+    opts = apply_aria2c_opts(opts, cfg)
+
     if is_audio:
         opts["postprocessors"] = [
             {
@@ -46,20 +61,6 @@ def build_ydl_opts(
     cookies = paths.get("cookies_path")
     if cookies:
         opts["cookiefile"] = cookies
-
-    if paths.get("aria2c_path") and cfg.get("use_aria2"):
-        chunk = 10485760 if network_type == "wifi" else 2097152
-        concurrent = 4 if network_type == "wifi" else 2
-        opts["external_downloader"] = "aria2c"
-        opts["external_downloader_args"] = {
-            "aria2c": [
-                "-x", str(concurrent),
-                "-s", str(concurrent),
-                "-k", "1M",
-            ]
-        }
-        opts["http_chunk_size"] = chunk
-        opts["concurrent_fragment_downloads"] = concurrent
 
     if cfg.get("rate_limit"):
         opts["ratelimit"] = cfg["rate_limit"]

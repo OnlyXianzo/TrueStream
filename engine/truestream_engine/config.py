@@ -22,6 +22,9 @@ DEFAULT_CFG = {
     # ── Network ─────────────────────────────────────────────────────────
     "rate_limit": "",
     "use_aria2": False,
+    "aria2c_enabled": False,
+    "aria2c_chunks": 5,
+    "aria2c_max_speed": None,
     "concurrent_fragments": 4,
     "socket_timeout": 30,
     "proxy": "",

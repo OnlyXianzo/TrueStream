@@ -6,6 +6,7 @@ import '../../../providers/download_provider.dart';
 import '../../../providers/engine_status_provider.dart';
 import '../../../providers/resume_provider.dart';
 import '../screens/format_picker_screen.dart';
+import 'batch_import_dialog.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -231,6 +232,35 @@ class _UrlInputState extends ConsumerState<_UrlInput> {
               ),
             ),
           ),
+          Semantics(
+            button: true,
+            label: 'Batch import URLs',
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Material(
+                color: widget.colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(8),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => showDialog(
+                    context: context,
+                    builder: (_) => const BatchImportDialog(),
+                  ),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.dashboard_customize,
+                      color: widget.colorScheme.onSurfaceVariant,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           Semantics(
             button: true,
             label: 'Submit URL',

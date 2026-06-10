@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
@@ -60,6 +61,8 @@ class AppSettings {
   final List<String> subtitleLanguages;
   final bool downloadAutoSubtitles;
   final bool embedSubtitles;
+  final List<String> customTemplates;
+  final List<Map<String, dynamic>> observedSources;
 
   const AppSettings({
     this.wifiOnly = false,
@@ -85,6 +88,8 @@ class AppSettings {
     this.subtitleLanguages = const ['en'],
     this.downloadAutoSubtitles = false,
     this.embedSubtitles = false,
+    this.customTemplates = const [],
+    this.observedSources = const [],
   });
 
   static const Object _sentinel = Object();
@@ -113,6 +118,7 @@ class AppSettings {
     List<String>? subtitleLanguages,
     bool? downloadAutoSubtitles,
     bool? embedSubtitles,
+    List<Map<String, dynamic>>? observedSources,
   }) {
     return AppSettings(
       wifiOnly: wifiOnly ?? this.wifiOnly,
@@ -138,8 +144,10 @@ class AppSettings {
       subtitleLanguages: subtitleLanguages ?? this.subtitleLanguages,
       downloadAutoSubtitles: downloadAutoSubtitles ?? this.downloadAutoSubtitles,
       embedSubtitles: embedSubtitles ?? this.embedSubtitles,
+      observedSources: observedSources ?? this.observedSources,
     );
   }
+}
 }
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -177,6 +185,12 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final subtitleLanguages = _prefs.getStringList('subtitleLanguages') ?? ['en'];
     final downloadAutoSubtitles = _prefs.getBool('downloadAutoSubtitles') ?? false;
     final embedSubtitles = _prefs.getBool('embedSubtitles') ?? false;
+    final observedSourcesJson = _prefs.getString('observedSources');
+    final observedSources = observedSourcesJson != null
+        ? List<Map<String, dynamic>>.from(
+            (jsonDecode(observedSourcesJson) as List).map((e) => Map<String, dynamic>.from(e as Map)),
+          )
+        : <Map<String, dynamic>>[];
 
     state = AppSettings(
       wifiOnly: wifiOnly,
@@ -202,6 +216,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       subtitleLanguages: subtitleLanguages,
       downloadAutoSubtitles: downloadAutoSubtitles,
       embedSubtitles: embedSubtitles,
+      observedSources: observedSources,
     );
   }
 
@@ -336,6 +351,48 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final newValue = !state.embedSubtitles;
     _prefs.setBool('embedSubtitles', newValue);
     state = state.copyWith(embedSubtitles: newValue);
+  }
+
+  void setScheduleEnabled(bool value) {
+    _prefs.setBool('scheduleEnabled', value);
+    state = state.copyWith(scheduleEnabled: value);
+  }
+
+  void setScheduleTime(String value) {
+    _prefs.setString('scheduleTime', value);
+    state = state.copyWith(scheduleTime: value);
+  }
+
+  void setScheduleDays(List<int> value) {
+    _prefs.setStringList('scheduleDays', value.map((e) => e.toString()).toList());
+    state = state.copyWith(scheduleDays: value);
+  }
+
+  void setSponsorBlockCats(List<String> cats) {
+    _prefs.setStringList('sponsorBlockCats', cats);
+    state = state.copyWith(sponsorBlockCats: cats);
+  }
+
+  void addObservedSource(Map<String, dynamic> source) {
+    final updated = [...state.observedSources, source];
+    _prefs.setString('observedSources', jsonEncode(updated));
+    state = state.copyWith(observedSources: updated);
+  }
+
+  void removeObservedSource(int index) {
+    final updated = [...state.observedSources]..removeAt(index);
+    _prefs.setString('observedSources', jsonEncode(updated));
+    state = state.copyWith(observedSources: updated);
+  }
+
+  void toggleObservedSource(int index) {
+    final updated = [...state.observedSources];
+    updated[index] = {
+      ...updated[index],
+      'enabled': !(updated[index]['enabled'] as bool? ?? true),
+    };
+    _prefs.setString('observedSources', jsonEncode(updated));
+    state = state.copyWith(observedSources: updated);
   }
 
   Future<void> clearAllCookies(String appDir) async {
