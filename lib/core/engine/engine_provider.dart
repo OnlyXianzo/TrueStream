@@ -24,11 +24,12 @@ final engineProvider = Provider<EngineService>((ref) {
       'cache_dir': _cacheDir,
       'output_dir': initialOutputDir,
       'ffmpeg_path': _ffmpegPath,
+      'cookies_path': settings.cookiesPath,
     });
   }
 
   ref.listen<AppSettings>(settingsProvider, (previous, next) {
-    if (previous?.downloadPath != next.downloadPath) {
+    if (previous?.downloadPath != next.downloadPath || previous?.cookiesPath != next.cookiesPath) {
       final outputDir = next.downloadPath == '/Internal/Videos'
           ? '$_appDir/TrueStream'
           : next.downloadPath;
@@ -37,6 +38,7 @@ final engineProvider = Provider<EngineService>((ref) {
         'cache_dir': _cacheDir,
         'output_dir': outputDir,
         'ffmpeg_path': _ffmpegPath,
+        'cookies_path': next.cookiesPath,
       });
     }
   });
