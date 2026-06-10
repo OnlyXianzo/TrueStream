@@ -129,6 +129,19 @@ class SettingsScreen extends ConsumerWidget {
                   );
                 },
               ).animate().fadeIn(delay: 220.ms, duration: 300.ms).slideX(begin: 0.1),
+              _SettingNavItem(
+                icon: Icons.schedule,
+                title: 'Download Schedule',
+                subtitle: 'Set time windows for downloads',
+                colorScheme: colorScheme,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ScheduleSettingsScreen(),
+                    ),
+                  );
+                },
+              ).animate().fadeIn(delay: 230.ms, duration: 300.ms).slideX(begin: 0.1),
               Padding(
                 padding: const EdgeInsets.only(top: 24, bottom: 8),
                 child: Text(
